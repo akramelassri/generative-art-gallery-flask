@@ -1,11 +1,300 @@
 {% extends "base-apps.html" %}
 
-{% block title %}Audio App{% endblock %}
+{% block title %}Audio Editor{% endblock %}
 
-{% block sidebar %} 
+{% block sidebar %}
+<div class="sidebar-container">
+    <!-- Basic Tools Section -->
+    <div class="container">
+        <button class="util-button" title="Basic Tools" data-bs-toggle="tooltip" data-bs-placement="right">
+            <i class="fa-solid fa-tools"></i>
+        </button>
+        <div class="dropdown">
+            <button class="dropdown-btn" onclick="loadAudio()">
+                <i class="fa-solid fa-folder-open"></i> Load Audio
+            </button>
+            <button class="dropdown-btn" onclick="playPauseAudio()">
+                <i class="fa-solid fa-play"></i> Play/Pause
+            </button>
+            <button class="dropdown-btn" data-bs-toggle="modal" data-bs-target="#cutModal">
+                <i class="fa-solid fa-scissors"></i> Cut Audio
+            </button>
+        </div>
+    </div>
+
+    <!-- Audio Effects Section -->
+    <div class="container">
+        <button class="util-button" title="Audio Effects" data-bs-toggle="tooltip" data-bs-placement="right">
+            <i class="fa-solid fa-waveform"></i>
+        </button>
+        <div class="dropdown">
+            <button class="dropdown-btn" data-bs-toggle="modal" data-bs-target="#speedModal">
+                <i class="fa-solid fa-gauge-high"></i> Change Speed
+            </button>
+            <button class="dropdown-btn" onclick="reverseAudio()">
+                <i class="fa-solid fa-arrows-rotate"></i> Reverse
+            </button>
+            <button class="dropdown-btn" data-bs-toggle="modal" data-bs-target="#mixModal">
+                <i class="fa-solid fa-blender"></i> Mix Audio
+            </button>
+        </div>
+    </div>
+
+    <!-- Management Section -->
+    <div class="container">
+        <button class="util-button" title="File Management" data-bs-toggle="tooltip" data-bs-placement="right">
+            <i class="fa-solid fa-cog"></i>
+        </button>
+        <div class="dropdown">
+            <button class="dropdown-btn" onclick="saveAudio()">
+                <i class="fa-solid fa-floppy-disk"></i> Save
+            </button>
+            <button class="dropdown-btn" onclick="undoAction()">
+                <i class="fa-solid fa-rotate-left"></i> Undo
+            </button>
+            <button class="dropdown-btn" onclick="redoAction()">
+                <i class="fa-solid fa-rotate-right"></i> Redo
+            </button>
+            <button class="dropdown-btn" onclick="resetToOriginal()">
+                <i class="fa-solid fa-arrows-spin"></i> Reset
+            </button>
+        </div>
+    </div>
+</div>
 
 {% endblock %}
 
 {% block maincontent %}
+<div class="container mt-4">
+  <h1 class="text-center mb-4">Audio Editor</h1>
 
+  <!-- Audio Player Section -->
+  <div class="card mx-auto shadow p-4" style="max-width: 600px;">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h5 class="mb-0">Now Playing: <span id="current-song">Song Title</span></h5>
+      <button id="play-pause-btn" class="btn btn-primary"><i class="fas fa-play"></i></button>
+    </div>
+    <audio id="audio-player" preload="metadata"></audio>
+    <div class="progress">
+      <div id="progress-bar" class="progress-bar bg-success" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+    <div class="d-flex justify-content-between mt-3">
+      <span id="current-time">0:00</span>
+      <span id="duration">0:00</span>
+    </div>
+  </div>
+</div>
+
+<!-- Load Audio Modal -->
+<div class="modal fade" id="loadAudioModal" tabindex="-1" aria-labelledby="loadAudioModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="loadAudioModalLabel">Load Audio</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <label for="audioFile" class="form-label">Select Audio File:</label>
+        <input type="file" class="form-control" id="audioFile" accept=".mp3,.wav">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="addAudio()">Load</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let history = [];
+  let current_index = -1;
+  let original_audio = null;
+
+  const audioPlayer = document.getElementById('audio-player');
+
+  // Update the audio player with the current audio
+  function updateAudio() {
+    const current_audio = history[current_index];
+    if (!current_audio) return;
+    const blob = current_audio.toBlob();
+    const url = URL.createObjectURL(blob);
+    audioPlayer.src = url;
+    audioPlayer.load();
+  }
+
+  // Show the modal when the "Load Audio" button is clicked
+  function loadAudio() {
+    const loadModal = new bootstrap.Modal(document.getElementById('loadAudioModal'));
+    loadModal.show();
+  }
+
+  // Add audio to the history
+  async function addAudio() {
+    console.log("Add Audio function called.");
+
+    const fileInput = document.getElementById('audioFile');
+    if (!fileInput.files.length) {
+      alert("Please select an audio file.");
+      return;
+    }
+
+    const file = fileInput.files[0];
+    try {
+      console.log("Processing file:", file.name);
+
+      const arrayBuffer = await file.arrayBuffer();
+      const audio = await AudioSegment.fromArrayBuffer(arrayBuffer);
+
+      console.log("Audio loaded successfully.");
+      history = [audio]; // Reset history with the new audio
+      current_index = 0; // Set the current index to 0
+      original_audio = audio; // Store the original audio
+      updateAudio(); // Update the audio player
+      $('#loadAudioModal').modal('hide'); // Close the modal
+
+      alert("Audio loaded successfully!");
+    } catch (error) {
+      console.error("Error loading audio:", error);
+      alert("Failed to load the audio file. Please try again.");
+    }
+  }
+
+  // Play/pause functionality
+  function playPauseAudio() {
+    if (audioPlayer.paused) {
+      audioPlayer.play();
+      document.getElementById('play-pause-btn').innerHTML = '<i class="fas fa-pause"></i>';
+    } else {
+      audioPlayer.pause();
+      document.getElementById('play-pause-btn').innerHTML = '<i class="fas fa-play"></i>';
+    }
+  }
+
+  // Cut functionality
+  function cutAudio() {
+    const start = parseFloat(document.getElementById('cutStart').value) * 1000 || 0;
+    const end = parseFloat(document.getElementById('cutEnd').value) * 1000 || history[current_index].duration;
+    const new_audio = history[current_index].slice(start, end);
+    addHistory(new_audio);
+    $('#cutModal').modal('hide');
+  }
+
+  // Change speed functionality
+  function changeSpeed() {
+    const speedFactor = parseFloat(document.getElementById('speedFactor').value) || 1.0;
+    const new_audio = speedup(history[current_index], speedFactor);
+    addHistory(new_audio);
+    $('#speedModal').modal('hide');
+  }
+
+  // Mix functionality
+  async function mixAudios() {
+    const fileInput = document.getElementById('mixFile');
+    if (!fileInput.files.length) return;
+    const file = fileInput.files[0];
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const mix_audio = await AudioSegment.fromArrayBuffer(arrayBuffer);
+      const position = parseFloat(document.getElementById('mixPosition').value) * 1000 || 0;
+      const new_audio = history[current_index].overlay(mix_audio, position);
+      addHistory(new_audio);
+      $('#mixModal').modal('hide');
+    } catch (error) {
+      console.error("Error mixing audio:", error);
+      alert("Failed to mix audio files. Please try again.");
+    }
+  }
+
+  // Reverse functionality
+  function reverseAudio() {
+    const new_audio = history[current_index].reverse();
+    addHistory(new_audio);
+  }
+
+  // Save functionality
+  function saveAudio() {
+    const outputFormat = 'mp3'; // Simplified for demo
+    const outputName = 'edited_audio';
+    const blob = history[current_index].toBlob(outputFormat);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${outputName}.${outputFormat}`;
+    a.click();
+  }
+
+  // Undo/Redo functionality
+  function undoAction() {
+    if (current_index > 0) {
+      current_index -= 1;
+      updateAudio();
+    } else {
+      alert("Already at earliest state");
+    }
+  }
+
+  function redoAction() {
+    if (current_index < history.length - 1) {
+      current_index += 1;
+      updateAudio();
+    } else {
+      alert("Already at latest state");
+    }
+  }
+
+  // Reset to original functionality
+  function resetToOriginal() {
+    if (original_audio) {
+      history = [original_audio];
+      current_index = 0;
+      updateAudio();
+    } else {
+      alert("No original audio loaded.");
+    }
+  }
+
+  // History management
+  function addHistory(new_audio) {
+    if (current_index < history.length - 1) {
+      history = history.slice(0, current_index + 1);
+    }
+    history.push(new_audio);
+    current_index = history.length - 1;
+    updateAudio();
+  }
+
+  // Progress bar and time updates
+  audioPlayer.addEventListener('timeupdate', () => {
+    const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+    document.getElementById('progress-bar').style.width = `${progress}%`;
+    document.getElementById('current-time').textContent = formatTime(audioPlayer.currentTime);
+    document.getElementById('duration').textContent = formatTime(audioPlayer.duration);
+  });
+
+  function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+  }
+  const containers = document.querySelectorAll('.sidebar .container');
+containers.forEach(container => {
+  const button = container.querySelector('.util-button');
+  const dropdown = container.querySelector('.dropdown');
+
+  // toggle on click
+  button.addEventListener('click', (event) => {
+    event.stopPropagation(); // stops immediate closing
+    closeAllDropdowns();
+    dropdown.classList.toggle('open');
+  });
+});
+
+// close on outside click
+document.addEventListener('click', closeAllDropdowns);
+
+function closeAllDropdowns() {
+  document.querySelectorAll('.sidebar .dropdown.open')
+    .forEach(openDropdown => openDropdown.classList.remove('open'));
+}
+</script>
 {% endblock %}
