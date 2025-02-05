@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Generative Art Project{% endblock %}</title>
+
+    <!-- Bootstrap css -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+
+    <!-- Font Awesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+
+<body>
+
+    {% block sidebar %}
+    <nav class="sidebar">
+        <!-- Brand Logo -->
+        <a href="{{url_for('home_page')}}" class="menu" title="Generative Art Library" data-bs-toggle="tooltip" data-bs-placement="right">
+            <i class="fas fa-leaf"></i>
+        </a>
+
+        <!-- Home Icon -->
+        <a href="{{url_for('home_page')}}" class="nav-link" title="Home" data-bs-toggle="tooltip" data-bs-placement="right">
+            <i class="fas fa-home"></i>
+        </a>
+
+        <!-- Gallery Icon -->
+        <a href="{{url_for('gallery_page')}}" class="nav-link" title="Gallery" data-bs-toggle="tooltip" data-bs-placement="right">
+            <i class="fas fa-images"></i>
+        </a>
+
+        <!-- Apps Icon -->
+        <a href="{{url_for('apps_page')}}" class="nav-link" title="Apps" data-bs-toggle="tooltip" data-bs-placement="right">
+            <i class="fas fa-th-large"></i>
+        </a>
+    </nav>
+    {% endblock %}
+
+    {% block maincontent %}
+    <!-- MAIN CONTENT -->
+    <div class="content">
+        <h1 class="mb-4">Apps</h1>
+
+        <!-- Row of square icon buttons -->
+        <div class="d-flex flex-wrap gap-3 mb-5">
+            <!-- Draw App (brush icon) -->
+            <a href="{{ url_for('drawing_app') }}" class="btn-square" type="button" title="Draw App" data-bs-toggle="tooltip" data-bs-placement="top">
+                <i class="fa-solid fa-shapes"></i>
+            </a>
+
+            <!-- Data Visualization (chart icon) -->
+            <button class="btn-square" type="button" title="Data Visualization" data-bs-toggle="tooltip"
+                data-bs-placement="top">
+                <i class="fas fa-chart-line"></i>
+            </button>
+
+            <!-- Image App (picture icon) -->
+            <button class="btn-square" type="button" title="Image App" data-bs-toggle="tooltip" data-bs-placement="top">
+                <i class="fas fa-image"></i>
+            </button>
+
+            <!-- Audio App (sound waves icon) -->
+            <button class="btn-square" type="button" title="Audio App" data-bs-toggle="tooltip" data-bs-placement="top">
+                <i class="fa-solid fa-file-audio"></i>
+                        </button>
+
+            <!-- Style Transfer (brain icon) -->
+            <button class="btn-square" type="button" title="Style Transfer" data-bs-toggle="tooltip"
+                data-bs-placement="top">
+                <i class="fas fa-paint-brush"></i>
+            </button>
+        </div>
+
+        <h2>Recent Artworks</h2>
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            <div class="col">
+                <div class="card">
+                    <img src="https://via.placeholder.com/300x200.png" class="card-img-top" alt="Artwork 1">
+                    <div class="card-body">
+                        <h5 class="card-title">Artwork 1</h5>
+                        <p class="card-text">Description of Artwork 1.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card">
+                    <img src="https://via.placeholder.com/300x200.png" class="card-img-top" alt="Artwork 2">
+                    <div class="card-body">
+                        <h5 class="card-title">Artwork 2</h5>
+                        <p class="card-text">Description of Artwork 2.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card">
+                    <img src="https://via.placeholder.com/300x200.png" class="card-img-top" alt="Artwork 3">
+                    <div class="card-body">
+                        <h5 class="card-title">Artwork 3</h5>
+                        <p class="card-text">Description of Artwork 3.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+
+    <!-- Bootstrap JS (with Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+    </script>
+    <script>
+        // Initialize default Bootstrap tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+            new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    </script>
+</body>
+
+</html>
