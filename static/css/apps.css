@@ -44,12 +44,13 @@ body {
     z-index: 999;
 }
 
-.menu {
+.sidebar .menu {
     width: 40px;
     height: 40px;
     border-radius: var(--border-radius);
     background: var(--card-bg);
     display: flex;
+    border: none;    
     align-items: center;
     justify-content: center;
     color: var(--icon-color);
@@ -62,17 +63,19 @@ body {
 
 
 /* Nav icons in sidebar */
-.nav-link {
+.sidebar .util-button {
     width: 100%;
     text-align: center;
     padding: 1rem 0;
+    border: none;    
     color: var(--sidebar-text);
+    background: var(--sidebar-bg);
     font-size: 1.4rem;
     text-decoration: none;
     transition: background-color 0.3s, color 0.3s;
 }
 
-.nav-link:hover {
+.sidebar .util-button:hover {
     background-color: var(--hover-bg);
     color: var(--sidebar-text);
 }
