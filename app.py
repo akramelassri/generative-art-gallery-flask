@@ -17,19 +17,19 @@ def apps_page():
 
 @app.route("/drawing-app")
 def drawing_app():
-    return render_template("base-apps.html")
+    return render_template("draw-app.html")
 
 @app.route("/data-app")
 def data_app():
-    pass
+    return render_template("data-app.html")
 
 @app.route("/image-app")
 def image_app():
-    return render_template("base-apps.html")
+    return render_template("image-apps.html")
 
 @app.route("/audio-app")
 def audio_app():
-    pass
+    return render_template("audio-app")
 
 if __name__ == '__main__':
     app.run(debug=True)
