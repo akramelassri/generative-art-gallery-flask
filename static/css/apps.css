@@ -63,11 +63,15 @@ body {
 
 
 /* Nav icons in sidebar */
+.sidebar .container{
+    position:relative;
+}
 .sidebar .util-button {
     width: 100%;
     text-align: center;
     padding: 1rem 0;
     border: none;
+    position: relative;
     color: var(--sidebar-text);
     background: var(--sidebar-bg);
     font-size: 1.4rem;
@@ -83,9 +87,10 @@ body {
 .sidebar .dropdown {
     display: none;
     position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
     width: auto ;
-    left: 210px;
-    top: 0;
+    left: 120%;
     background-color: var(--sidebar-bg);
     padding: 2px;
     border-radius: 5px;
@@ -104,12 +109,12 @@ body {
     white-space: nowrap;
 }
 
-.dropdown a:hover {
+.dropdown button:hover {
     background-color: #444;
 }
 
 /* Show dropdown on hover */
-.util-button:hover .dropdown {
+.sidebar .dropdown.open {
     display: inline-block;
 }
 
