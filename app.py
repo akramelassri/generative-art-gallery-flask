@@ -25,11 +25,11 @@ def data_app():
 
 @app.route("/image-app")
 def image_app():
-    return render_template("image-apps.html")
+    return render_template("image-app.html")
 
 @app.route("/audio-app")
 def audio_app():
-    return render_template("audio-app")
+    return render_template("audio-app.html")
 
 if __name__ == '__main__':
     app.run(debug=True)

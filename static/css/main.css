@@ -60,9 +60,6 @@ body {
     transition: transform 0.3s;
 }
 
-.brand-logo:hover {
-    transform: translateY(-3px);
-}
 
 /* Nav icons in sidebar */
 .nav-link {

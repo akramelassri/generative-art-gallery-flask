@@ -47,26 +47,24 @@
 
         <!-- Row of square icon buttons -->
         <div class="d-flex flex-wrap gap-3 mb-5">
-            <!-- Draw App (brush icon) -->
             <a href="{{ url_for('drawing_app') }}" class="btn-square" type="button" title="Draw App" data-bs-toggle="tooltip" data-bs-placement="top">
                 <i class="fa-solid fa-shapes"></i>
             </a>
 
-            <!-- Data Visualization (chart icon) -->
-            <button class="btn-square" type="button" title="Data Visualization" data-bs-toggle="tooltip"
-                data-bs-placement="top">
+            <a href="{{ url_for('data_app') }}" class="btn-square" type="button" title="Data Visualization" data-bs-toggle="tooltip" data-bs-placement="top">
                 <i class="fas fa-chart-line"></i>
-            </button>
+            </a>
 
-            <!-- Image App (picture icon) -->
-            <button class="btn-square" type="button" title="Image App" data-bs-toggle="tooltip" data-bs-placement="top">
+            <!-- Data Visualization (chart icon) -->
+            <a href="{{ url_for('image_app') }}" class="btn-square" type="button" title="Image App" data-bs-toggle="tooltip" data-bs-placement="top">
                 <i class="fas fa-image"></i>
-            </button>
+            </a>
+
 
             <!-- Audio App (sound waves icon) -->
-            <button class="btn-square" type="button" title="Audio App" data-bs-toggle="tooltip" data-bs-placement="top">
+            <a href="{{ url_for('audio_app') }}" class="btn-square" type="button" title="Audio App" data-bs-toggle="tooltip" data-bs-placement="top">
                 <i class="fa-solid fa-file-audio"></i>
-                        </button>
+            </a>
 
             <!-- Style Transfer (brain icon) -->
             <button class="btn-square" type="button" title="Style Transfer" data-bs-toggle="tooltip"

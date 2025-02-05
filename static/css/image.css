@@ -1,29 +1,36 @@
 :root {
     /* Layout variable */
     --sidebar-width: 60px;
-  
+
     /* Colors */
-    --sidebar-bg: #8CBF4C; /* Solid green for sidebar */
-    --sidebar-text: #fff;  /* White text/icons in sidebar */
-    --main-bg: #eff5e6;    /* Pale green background for main content */
-    --card-bg: #fff;       /* White for cards and buttons */
-    --card-text: #333;     /* Dark text inside cards */
-    --icon-color: #000;    /* Black icons */
-    --hover-bg: rgba(0, 0, 0, 0.1); /* Light hover background on sidebar nav */
-  
+    --sidebar-bg: #8CBF4C;
+    /* Solid green for sidebar */
+    --sidebar-text: #fff;
+    /* White text/icons in sidebar */
+    --main-bg: #eff5e6;
+    /* Pale green background for main content */
+    --card-bg: #fff;
+    /* White for cards and buttons */
+    --card-text: #333;
+    /* Dark text inside cards */
+    --icon-color: #000;
+    /* Black icons */
+    --hover-bg: rgba(0, 0, 0, 0.1);
+    /* Light hover background on sidebar nav */
+
     /* Shadows & rounding */
     --basic-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     --border-radius: 8px;
-  }
-  
-  body {
+}
+
+body {
     margin: 0;
     font-family: sans-serif;
     background-color: var(--main-bg);
-  }
-  
-  /********** SIDEBAR **********/
-  .sidebar {
+}
+
+/********** SIDEBAR **********/
+.sidebar {
     width: var(--sidebar-width);
     min-height: 100vh;
     background-color: var(--sidebar-bg);
@@ -35,10 +42,9 @@
     align-items: center;
     padding-top: 1rem;
     z-index: 999;
-  }
-  
-  /* Menu button at top */
-  .menu {
+}
+
+.menu {
     width: 40px;
     height: 40px;
     border-radius: var(--border-radius);
@@ -52,69 +58,102 @@
     text-decoration: none;
     box-shadow: var(--basic-shadow);
     transition: transform 0.3s;
-  }
-  
-  /* Hover for the menu icon */
-  .menu:hover {
-    transform: translateY(-3px);
-  }
-  
-  /* Sidebar icons (nav-link) */
-  .nav-link {
-    width: 40px;         /* Fixed width matching the menu icon */
-    margin: 0 auto;      /* Center horizontally */
+}
+
+
+/* Nav icons in sidebar */
+.nav-link {
+    width: 100%;
     text-align: center;
     padding: 1rem 0;
     color: var(--sidebar-text);
     font-size: 1.4rem;
     text-decoration: none;
     transition: background-color 0.3s, color 0.3s;
-  }
-  
-  .nav-link:hover {
+}
+
+.nav-link:hover {
     background-color: var(--hover-bg);
     color: var(--sidebar-text);
-  }
-  
-  /* If you use a dropdown with no arrow, remove the arrow from .dropdown-toggle.
-     But we are not using .dropdown-toggle here, so not strictly necessary. */
-  /*
-  .dropdown-toggle::after {
-    display: none !important;
-  }
-  */
-  
-  /********** MAIN CONTENT **********/
-  .content {
-    margin-left: var(--sidebar-width);
-    padding: 2rem;
-  }
-  
-  .content h1,
-  .content h2 {
-    color: #000; /* Black headings */
-  }
-  
-  /* Optional styles for square buttons (if needed) */
-  .btn-square {
-    width: 80px;
-    height: 80px;
-    background: var(--card-bg);
-    border: none;
-    color: var(--icon-color);
+}
+/* */
+.overlay-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    width: var(--sidebar-width);
+    min-height: 100vh;
+    background-color: var(--sidebar-bg);
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-left: 1rem;
+    z-index: 1050;
+}
+
+.overlay-sidebar.active {
+    transform: translateX(0);
+}
+
+.overlay-sidebar .menu {
+    width: 40px;
+    height: 40px;
     border-radius: var(--border-radius);
-    font-size: 1.5rem;
+    background: var(--card-bg);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
+    color: var(--icon-color);
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+    text-decoration: none;
     box-shadow: var(--basic-shadow);
-    position: relative;
-  }
-  
-  .btn-square:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s;
+}
+
+
+/* Nav icons in sidebar */
+.overlay-sidebar .nav-link {
+    width: 100%;
+    text-align: center;
+    padding: 1rem 0;
+    color: var(--sidebar-text);
+    font-size: 1.4rem;
+    text-decoration: none;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.overlay-sidebar .nav-link:hover {
+    background-color: var(--hover-bg);
+    color: var(--sidebar-text);
+}
+
+/* Close button styled as a circle, positioned outside the overlay sidebar */
+.close-overlay {
+    position: absolute;
+    top: 1rem;
+    right: -50px;
+    /* Adjust this value as needed */
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    color: var(--icon-color);
+    border: none;
+    /* Initially, display is set in the override below */
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--basic-shadow);
     cursor: pointer;
-  }
-  
+    font-size: 1.5rem;
+}
+
+/* Hide the close button by default */
+.overlay-sidebar .close-overlay {
+    display: none;
+}
+
+/* Show the close button when the overlay sidebar is active */
+.overlay-sidebar.active .close-overlay {
+    display: flex;
+}
