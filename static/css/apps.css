@@ -50,7 +50,7 @@ body {
     border-radius: var(--border-radius);
     background: var(--card-bg);
     display: flex;
-    border: none;    
+    border: none;
     align-items: center;
     justify-content: center;
     color: var(--icon-color);
@@ -67,7 +67,7 @@ body {
     width: 100%;
     text-align: center;
     padding: 1rem 0;
-    border: none;    
+    border: none;
     color: var(--sidebar-text);
     background: var(--sidebar-bg);
     font-size: 1.4rem;
@@ -79,6 +79,40 @@ body {
     background-color: var(--hover-bg);
     color: var(--sidebar-text);
 }
+
+.sidebar .dropdown {
+    display: none;
+    position: absolute;
+    width: auto ;
+    left: 210px;
+    top: 0;
+    background-color: var(--sidebar-bg);
+    padding: 2px;
+    border-radius: 5px;
+    z-index: 100;
+}
+
+.sidebar .dropdown button {
+    display: block;
+    padding: 6px;
+    width: 100%;
+    color: var(--sidebar-text);
+    background: var(--sidebar-bg);
+    border: none;
+    text-decoration: none;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.dropdown a:hover {
+    background-color: #444;
+}
+
+/* Show dropdown on hover */
+.util-button:hover .dropdown {
+    display: inline-block;
+}
+
 /* */
 .overlay-sidebar {
     transform: translateX(-100%);

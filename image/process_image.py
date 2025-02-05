@@ -20,18 +20,16 @@ def process_image(img,type_process,name_process, value = None):
                     processed_image = np.clip(processed_image, 0, 255)
                 case "color_inversion":
                     processed_image = cv2.bitwise_not(img)
-        case "blur":
-            match name_process:
-                case "guassian":
-                    processed_image = cv2.GaussianBlur(img,(5,5), value)
-                case "pixelation":
-                    pass
         case "transformation":
             match name_process:
                 case "wraping":
                     rows, cols = img.shape[:2]
                     m = np.float32([[1, 0, 50], [0, 1, 50]])
                     processed_image = cv2.warpAffine(img, m, (cols, rows))
+                case "blurguaussian":
+                    processed_image = cv2.GaussianBlur(img,(5,5), value)
+                case "pixelation":
+                    pass
         case "artistic":
             match name_process:
                 case "oil":
