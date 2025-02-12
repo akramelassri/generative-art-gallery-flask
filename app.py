@@ -4,6 +4,8 @@ import numpy as np
 import cv2
 from image.process_image import process_image_test
 import os 
+import subprocess
+import sys
 
 app = Flask(__name__)
 
@@ -24,8 +26,14 @@ def apps_page():
 
 @app.route("/drawing-app")
 def drawing_app():
-    return render_template("draw-app.html")
+    venv_python = sys.executable
 
+    # Get the absolute path of the script inside the "draw" folder
+    script_path = os.path.abspath(os.path.join("draw", "testingpygame.py"))
+
+    # Run the script using the same Python executable
+    subprocess.Popen([venv_python, script_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return jsonify({"message": "Script started successfully!"}), 200
 @app.route("/data-app")
 def data_app():
     return render_template("data-app.html")

@@ -1,0 +1,84 @@
+{
+    "panel": {
+        "colours": {
+            "dark_bg": "rgb(239, 243, 234)",
+            "normal_border": "rgb(239, 243, 234)"
+        }
+    },
+
+    "menu_button": {
+        "colours": {
+            "normal_bg": "#EFF3EA"
+        },
+        "misc": {
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "10",
+            "border_width": "0",
+            "shadow_width": "1"
+        },
+        "images": {
+            "normal_image": {
+                "path": "./draw/assets/three-horizontal-lines-icon.png"
+            },
+            "hovered_image": {
+                "path": "./draw/assets/three-horizontal-lines-icon.png"
+            },
+            "selected_image": {
+                "path": "./draw/assets/three-horizontal-lines-icon.png"
+            },
+            "disabled_image": {
+                "path": "./draw/assets/three-horizontal-lines-icon.png"
+            }
+        }
+    },
+    "select_button": {
+        "colours": {
+            "normal_bg": "#EFF3EA"
+        },
+        "misc": {
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "10",
+            "border_width": "0",
+            "shadow_width": "1"
+        },
+        "images": {
+            "normal_image": {
+                "path": "./draw/assets/pointer-arrow-icon.png"
+            },
+            "hovered_image": {
+                "path": "./draw/assets/pointer-arrow-icon.png"
+            },
+            "selected_image": {
+                "path": "./draw/assets/pointer-arrow-icon.png"
+            },
+            "disabled_image": {
+                "path": "./draw/assets/pointer-arrow-icon.png"
+            }
+        }
+    },
+    "shapes_button": {
+        "colours": {
+            "normal_bg": "#EFF3EA"
+        },
+        "misc": {
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "10",
+            "border_width": "0",
+            "shadow_width": "1"
+        },
+        "images": {
+            "normal_image": {
+                "path": "./draw/assets/square-icon.png"
+            },
+            "hovered_image": {
+                "path": "./draw/assets/square-icon.png"
+            },
+            "selected_image": {
+                "path": "./draw/assets/square-icon.png"
+            },
+            "disabled_image": {
+                "path": "./draw/assets/square-icon.png"
+            }
+        }
+    }
+}

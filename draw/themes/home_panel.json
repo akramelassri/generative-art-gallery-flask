@@ -1,0 +1,159 @@
+{
+    "custom_txt": {
+        "colours": {
+            "normal_text": "#000000"
+        },
+        "font": {
+            "name": "montserrat",
+            "size": "30",
+            "bold": "1",
+            "italic": "0",
+            "regular_path": "./draw/Montserrat/static/Montserrat-Regular.ttf",
+            "bold_path": "./draw/Montserrat/static/Montserrat-Bold.ttf"
+        }
+    },
+    "panel": {
+        "colours": {
+            "dark_bg": "#859F3D"
+        },
+        "misc": {
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "10",
+            "border_width": "0"
+        }
+    },
+    "side_menu": {
+        "colours": {
+            "dark_bg": "#859F3D",
+            "normal_border": "#859F3D"
+        },
+        "misc": {
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "10",
+            "border_width": "1",
+            "shadow_width": "8"
+        }
+    },
+    "label": {
+        "font": {
+            "name": "montserrat",
+            "size": "12",
+            "bold": "1",
+            "italic": "0",
+            "regular_path": "./draw/Montserrat/static/Montserrat-Regular.ttf",
+            "bold_path": "./draw/Montserrat/static/Montserrat-Bold.ttf"
+        }
+    },
+    "draw_app": {
+        "colours": {
+            "normal_bg": "#EFF3EA",
+            "hovered_bg": "#D9DFC6",
+            "selected_bg": "#CCDF92",
+            "active_bg": "#CCDF92"
+        },
+        "misc": {
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "10",
+            "border_width": "1",
+            "shadow_width": "15"
+        },
+        "images": {
+            "normal_image": {
+                "path": "./draw/assets/brush-pencil-icon(1).png"
+            },
+            "hovered_image": {
+                "path": "./draw/assets/brush-pencil-icon(1).png"
+            },
+            "selected_image": {
+                "path": "./draw/assets/brush-pencil-icon(1).png"
+            },
+            "disabled_image": {
+                "path": "./draw/assets/brush-pencil-icon(1).png"
+            }
+        }
+    },
+    "data_app": {
+        "colours": {
+            "normal_bg": "#EFF3EA",
+            "hovered_bg": "#D9DFC6",
+            "selected_bg": "#CCDF92",
+            "active_bg": "#CCDF92"
+        },
+        "misc": {
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "10",
+            "border_width": "1",
+            "shadow_width": "15"
+        },
+        "images": {
+            "normal_image": {
+                "path": "./draw/assets/mobile-signal-icon.png"
+            },
+            "hovered_image": {
+                "path": "./draw/assets/mobile-signal-icon.png"
+            },
+            "selected_image": {
+                "path": "./draw/assets/mobile-signal-icon.png"
+            },
+            "disabled_image": {
+                "path": "./draw/assets/mobile-signal-icon.png"
+            }
+        }
+    },
+    "image_app": {
+        "colours": {
+            "normal_bg": "#EFF3EA",
+            "hovered_bg": "#D9DFC6",
+            "selected_bg": "#CCDF92",
+            "active_bg": "#CCDF92"
+        },
+        "misc": {
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "10",
+            "border_width": "1",
+            "shadow_width": "15"
+        },
+        "images": {
+            "normal_image": {
+                "path": "./draw/assets/image-icon.png"
+            },
+            "hovered_image": {
+                "path": "./draw/assets/image-icon.png"
+            },
+            "selected_image": {
+                "path": "./draw/assets/image-icon.png"
+            },
+            "disabled_image": {
+                "path": "./draw/assets/image-icon.png"
+            }
+        }
+    },
+    "audio_app": {
+        "colours": {
+            "normal_bg": "#EFF3EA",
+            "hovered_bg": "#D9DFC6",
+            "selected_bg": "#CCDF92",
+            "active_bg": "#CCDF92"
+        },
+        "misc": {
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "10",
+            "border_width": "1",
+            "shadow_width": "15"
+        },
+        "images": {
+            "normal_image": {
+                "path": "./draw/assets/analyze-sound-wave-icon.png"
+            },
+            "hovered_image": {
+                "path": "./draw/assets/analyze-sound-wave-icon.png"
+            },
+            "selected_image": {
+                "path": "./draw/assets/analyze-sound-wave-icon.png"
+            },
+            "disabled_image": {
+                "path": "./draw/assets/analyze-sound-wave-icon.png"
+            }
+        }
+    }
+}

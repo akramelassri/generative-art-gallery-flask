@@ -49,11 +49,11 @@
 </div>
 <div class="container2">
     <div class="container">
-        <button class="util-button" title="Save File" data-bs-toggle="tooltip" data-bs-placement="right">
+        <button class="util-button" title="Save File" data-bs-toggle="tooltip" data-bs-placement="right" id="savebtn">
             <i class="fa-solid fa-floppy-disk"></i> </button>
     </div>
     <div class="container">
-        <button class="util-button" title="Export File" data-bs-toggle="tooltip" data-bs-placement="right">
+        <button class="util-button" title="Export File" data-bs-toggle="tooltip" data-bs-placement="right" id="exportbtn">
             <i class="fa-solid fa-file-export"></i> </button>
     </div>
 </div>
@@ -185,6 +185,7 @@
         }).then(response => response.json())
             .then(data => {
                 if (data.image_url) {
+                    processed_image_url = data.image_url
                     imageContainer.innerHTML = '<img src="' + data.image_url + '?t=' + Date.now() + '" alt="Uploaded Image">';
                 }
             });
@@ -208,6 +209,8 @@
         }).then(response => response.json())
             .then(data => {
                 if (data.image_url) {
+                    processed_image_url = data.image_url
+
                     imageContainer.innerHTML = '<img src="' + data.image_url + '?t=' + Date.now() + '" alt="Uploaded Image">';
                 }
             });
@@ -231,6 +234,7 @@
         }).then(response => response.json())
             .then(data => {
                 if (data.image_url) {
+                    processed_image_url = data.image_url
                     imageContainer.innerHTML = '<img src="' + data.image_url + '?t=' + Date.now() + '" alt="Uploaded Image">';
                 }
             });
@@ -254,6 +258,7 @@
         }).then(response => response.json())
             .then(data => {
                 if (data.image_url) {
+                    processed_image_url = data.image_url
                     imageContainer.innerHTML = '<img src="' + data.image_url + '?t=' + Date.now() + '" alt="Uploaded Image">';
                 }
             });
@@ -277,6 +282,8 @@
         }).then(response => response.json())
             .then(data => {
                 if (data.image_url) {
+                    processed_image_url = data.image_url
+
                     imageContainer.innerHTML = '<img src="' + data.image_url + '?t=' + Date.now() + '" alt="Uploaded Image">';
                 }
             });
@@ -300,6 +307,8 @@
         }).then(response => response.json())
             .then(data => {
                 if (data.image_url) {
+                    processed_image_url = data.image_url
+
                     imageContainer.innerHTML = '<img src="' + data.image_url + '?t=' + Date.now() + '" alt="Uploaded Image">';
                 }
             });
@@ -323,6 +332,8 @@
         }).then(response => response.json())
             .then(data => {
                 if (data.image_url) {
+                    processed_image_url = data.image_url
+
                     imageContainer.innerHTML = '<img src="' + data.image_url + '?t=' + Date.now() + '" alt="Uploaded Image">';
                 }
             });
@@ -346,12 +357,23 @@
         }).then(response => response.json())
             .then(data => {
                 if (data.image_url) {
+                    processed_image_url = data.image_url
                     imageContainer.innerHTML = '<img src="' + data.image_url + '?t=' + Date.now() + '" alt="Uploaded Image">';
                 }
             });
         slider.value = 0;
         brightnessValue.textContent = 0;
     })
+    document.getElementById("savebtn").addEventListener("click", function () {
+});
+document.getElementById("exportbtn").addEventListener("click", function () {
+    const link = document.createElement("a"); 
+    extension = processed_image_url.split('.').pop()
+    link.href = processed_image_url;
+    link.download = `processed_image.${extension}`;
+    link.click();  // Trigger download
+});
+
 </script>
 
 {% endblock %}
