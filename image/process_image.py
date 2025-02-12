@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-def process_image(img,type_process,name_process, value = None):
+def process_image_test(img,type_process,name_process, value = 0):
     match type_process:
         case "basic_adjustments":
             match name_process:
@@ -22,12 +22,8 @@ def process_image(img,type_process,name_process, value = None):
                     processed_image = cv2.bitwise_not(img)
         case "transformation":
             match name_process:
-                case "wraping":
-                    rows, cols = img.shape[:2]
-                    m = np.float32([[1, 0, 50], [0, 1, 50]])
-                    processed_image = cv2.warpAffine(img, m, (cols, rows))
                 case "blurguaussian":
-                    processed_image = cv2.GaussianBlur(img,(5,5), value)
+                    processed_image = cv2.GaussianBlur(img,(5,5), 15)
                 case "pixelation":
                     pass
         case "artistic":
@@ -43,3 +39,4 @@ def process_image(img,type_process,name_process, value = None):
                     processed_image = cv2.stylization(img, sigma_s=60, sigma_r=0.6)
                     
     return processed_image
+

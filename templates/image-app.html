@@ -3,61 +3,355 @@
 {% block title %}Image Processing{% endblock %}
 
 {% block sidebar %}
-<div class="container">
-    <button class="util-button" title="Basic Adjustments" data-bs-toggle="tooltip" data-bs-placement="right">
-        <i class="fa-solid fa-sliders"></i>
-    </button>
-    <div class="dropdown">
-        <button>Brightness</button>
+<div class="container1">
+    <div class="container">
+        <button class="util-button" title="Basic Adjustments" data-bs-toggle="tooltip" data-bs-placement="right">
+            <i class="fa-solid fa-sliders"></i>
+        </button>
+        <div class="dropdown">
+            <button>Brightness</button>
+        </div>
+        <div class="dropdown2">
+            <label for="brightnessSlider" class="form-label">Adjust Brightness</label>
+            <input type="range" class="form-range" id="brightnessSlider" min="-100" max="100" value="0">
+            <div class="value-display" id="brightnessValue">0</div>
+        </div>
+    </div>
+    <div class="container">
+        <button class="util-button" title="Color Adjustments" data-bs-toggle="tooltip" data-bs-placement="right">
+            <i class="fa-solid fa-palette"></i>
+        </button>
+        <div class="dropdown">
+            <button id="blur">Guassian Blur</button>
+        </div>
+    </div>
+    <div class="container">
+        <button class="util-button" title="Transformation Effects" data-bs-toggle="tooltip" data-bs-placement="right">
+            <i class="fa-brands fa-codepen"></i>
+        </button>
+        <div class="dropdown">
+            <button id="sepia">Sepia</button>
+            <button id="colorinv">Color Inversion</button>
+            <button id="gray">Gray Scale</button>
+        </div>
+    </div>
+    <div class="container">
+        <button class="util-button" title="Artistic Effects" data-bs-toggle="tooltip" data-bs-placement="right">
+            <i class="fa-solid fa-eye"></i>
+        </button>
+        <div class="dropdown">
+            <button id="oil">Oil Painting</button>
+            <button id="sketch0">Pencil Sketch (B&W)</button>
+            <button id="sketch1">Pencil Sketch (Colored)</button>
+            <button id="water">Water Effect </button>
+        </div>
     </div>
 </div>
-<div class="container">
-    <button class="util-button" title="Color Adjustments" data-bs-toggle="tooltip" data-bs-placement="right">
-        <i class="fa-solid fa-palette"></i>
-    </button>
-    <div class="dropdown">
-        <button>Sepia</button>
-        <button>Color Inversion</button>
-        <button>Gray Scale</button>
+<div class="container2">
+    <div class="container">
+        <button class="util-button" title="Save File" data-bs-toggle="tooltip" data-bs-placement="right">
+            <i class="fa-solid fa-floppy-disk"></i> </button>
+    </div>
+    <div class="container">
+        <button class="util-button" title="Export File" data-bs-toggle="tooltip" data-bs-placement="right">
+            <i class="fa-solid fa-file-export"></i> </button>
     </div>
 </div>
-<div class="container">
-    <button class="util-button" title="Transformation Effects" data-bs-toggle="tooltip" data-bs-placement="right">
-        <i class="fa-brands fa-codepen"></i>
-    </button>
-</div>
-<div class="container">
-    <button class="util-button" title="Artistic Effects" data-bs-toggle="tooltip" data-bs-placement="right">
-        <i class="fa-solid fa-eye"></i>
-    </button>
-</div>
-
-
-
 {% endblock %}
 
 {% block maincontent %}
+<h1 class="image-title">Image Editor</h1>
+<div class="image-container" id="imageContainer">
+    <span id="placeholderText">No Image Uploaded</span>
+</div>
+
+<div class="action-buttons">
+    <input type="file" id="uploadInput" accept="image/png, image/jpeg" style="display: none;">
+    <label for="uploadInput" class="action-button" id="uploadBtn">Upload Image</label>
+</div>
 <script>
-const containers = document.querySelectorAll('.sidebar .container');
-containers.forEach(container => {
-  const button = container.querySelector('.util-button');
-  const dropdown = container.querySelector('.dropdown');
+    document.getElementById('uploadInput').addEventListener('change', function () {
+        var file = this.files[0];
+        if (file) {
+            var formData = new FormData();
+            formData.append('file', file);
 
-  // toggle on click
-  button.addEventListener('click', (event) => {
-    event.stopPropagation(); // stops immediate closing
-    closeAllDropdowns();
-    dropdown.classList.toggle('open');
-  });
-});
+            // Send the file to the Flask server.
+            fetch("{{ url_for('upload') }}", {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.image_url) {
+                        image_url_global = data.image_url
+                        // Update the preview container with the returned image URL.
+                        var imageContainer = document.getElementById('imageContainer');
+                        imageContainer.innerHTML = '<img src="' + image_url_global + '" alt="Uploaded Image">';
+                    }
+                })
+        }
+    });
+    // Select all sidebar containers
+    const containers = document.querySelectorAll('.sidebar .container');
 
-// close on outside click
-document.addEventListener('click', closeAllDropdowns);
+    containers.forEach(container => {
+        const button = container.querySelector('.util-button');
+        const dropdown = container.querySelector('.dropdown');
+        const dropdownButton = container.querySelector('.dropdown button');
+        const dropdown2 = container.querySelector('.dropdown2');
 
-function closeAllDropdowns() {
-  document.querySelectorAll('.sidebar .dropdown.open')
-    .forEach(openDropdown => openDropdown.classList.remove('open'));
-}
+        // Toggle dropdown (first level) on util-button click
+        if (button && dropdown) {
+            button.addEventListener('click', (event) => {
+                event.stopPropagation(); // Prevents immediate closing
+                closeAllDropdowns();
+                dropdown.classList.toggle('open');
+            });
+        }
 
+        // Toggle dropdown2 (second level) on dropdown button click
+        if (dropdownButton && dropdown2) {
+            dropdownButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                closeAllDropdowns();
+                dropdown2.classList.toggle('open');
+            });
+        }
+
+        // Prevent clicks within dropdown2 from closing it (covers slider and other elements)
+        if (dropdown2) {
+            dropdown2.addEventListener('click', (event) => {
+                event.stopPropagation();
+            });
+            dropdown2.addEventListener('input', (event) => {
+                event.stopPropagation();
+            });
+        }
+    });
+
+    // Close dropdowns on click outside
+    document.addEventListener('click', closeAllDropdowns);
+
+    function closeAllDropdowns() {
+        // Close all open dropdowns
+        document.querySelectorAll('.sidebar .dropdown.open')
+            .forEach(openDropdown => openDropdown.classList.remove('open'));
+
+        document.querySelectorAll('.sidebar .dropdown2.open')
+            .forEach(openDropdown2 => openDropdown2.classList.remove('open'));
+    }
+
+    const slider = document.getElementById('brightnessSlider');
+    const brightnessValue = document.getElementById('brightnessValue');
+
+    slider.addEventListener('input', function () {
+        const value = slider.value;
+        brightnessValue.textContent = value;
+        fetch("{{ url_for('process_image') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "image_url": image_url_global,
+                "type_process": "basic_adjustments",
+                "name_process": "brightness",
+                "value": value
+            })
+
+
+        }).then(response => response.json())
+            .then(data => {
+                if (data.image_url) {
+                    imageContainer.innerHTML = '<img src="' + data.image_url + '?t=' + Date.now() + '" alt="Uploaded Image">';
+                }
+            });
+    });
+    document.querySelector("#blur").addEventListener('click', function () {
+        fetch("{{ url_for('process_image') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "image_url": image_url_global,
+                "type_process": "transformation",
+                "name_process": "blurguaussian",
+                "value": 1
+            })
+
+
+        }).then(response => response.json())
+            .then(data => {
+                if (data.image_url) {
+                    imageContainer.innerHTML = '<img src="' + data.image_url + '?t=' + Date.now() + '" alt="Uploaded Image">';
+                }
+            });
+        slider.value = 0;
+        brightnessValue.textContent = 0;
+    })
+    document.querySelector("#sepia").addEventListener('click', function () {
+        fetch("{{ url_for('process_image') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "image_url": image_url_global,
+                "type_process": "color_adjustments",
+                "name_process": "sepia",
+                "value": 1
+            })
+
+
+        }).then(response => response.json())
+            .then(data => {
+                if (data.image_url) {
+                    imageContainer.innerHTML = '<img src="' + data.image_url + '?t=' + Date.now() + '" alt="Uploaded Image">';
+                }
+            });
+        slider.value = 0;
+        brightnessValue.textContent = 0;
+    })
+    document.querySelector("#colorinv").addEventListener('click', function () {
+        fetch("{{ url_for('process_image') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "image_url": image_url_global,
+                "type_process": "color_adjustments",
+                "name_process": "color_inversion",
+                "value": 1
+            })
+
+
+        }).then(response => response.json())
+            .then(data => {
+                if (data.image_url) {
+                    imageContainer.innerHTML = '<img src="' + data.image_url + '?t=' + Date.now() + '" alt="Uploaded Image">';
+                }
+            });
+        slider.value = 0;
+        brightnessValue.textContent = 0;
+    })
+    document.querySelector("#gray").addEventListener('click', function () {
+        fetch("{{ url_for('process_image') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "image_url": image_url_global,
+                "type_process": "color_adjustments",
+                "name_process": "grayscale",
+                "value": 1
+            })
+
+
+        }).then(response => response.json())
+            .then(data => {
+                if (data.image_url) {
+                    imageContainer.innerHTML = '<img src="' + data.image_url + '?t=' + Date.now() + '" alt="Uploaded Image">';
+                }
+            });
+        slider.value = 0;
+        brightnessValue.textContent = 0;
+    })
+    document.querySelector("#oil").addEventListener('click', function () {
+        fetch("{{ url_for('process_image') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "image_url": image_url_global,
+                "type_process": "artistic",
+                "name_process": "oil",
+                "value": 1
+            })
+
+
+        }).then(response => response.json())
+            .then(data => {
+                if (data.image_url) {
+                    imageContainer.innerHTML = '<img src="' + data.image_url + '?t=' + Date.now() + '" alt="Uploaded Image">';
+                }
+            });
+        slider.value = 0;
+        brightnessValue.textContent = 0;
+    })
+    document.querySelector("#sketch0").addEventListener('click', function () {
+        fetch("{{ url_for('process_image') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "image_url": image_url_global,
+                "type_process": "artistic",
+                "name_process": "pencil",
+                "value": 1
+            })
+
+
+        }).then(response => response.json())
+            .then(data => {
+                if (data.image_url) {
+                    imageContainer.innerHTML = '<img src="' + data.image_url + '?t=' + Date.now() + '" alt="Uploaded Image">';
+                }
+            });
+        slider.value = 0;
+        brightnessValue.textContent = 0;
+    })
+    document.querySelector("#sketch1").addEventListener('click', function () {
+        fetch("{{ url_for('process_image') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "image_url": image_url_global,
+                "type_process": "artistic",
+                "name_process": "pencil",
+                "value": 2
+            })
+
+
+        }).then(response => response.json())
+            .then(data => {
+                if (data.image_url) {
+                    imageContainer.innerHTML = '<img src="' + data.image_url + '?t=' + Date.now() + '" alt="Uploaded Image">';
+                }
+            });
+        slider.value = 0;
+        brightnessValue.textContent = 0;
+    })
+    document.querySelector("#water").addEventListener('click', function () {
+        fetch("{{ url_for('process_image') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "image_url": image_url_global,
+                "type_process": "artistic",
+                "name_process": "water",
+                "value": 1
+            })
+
+
+        }).then(response => response.json())
+            .then(data => {
+                if (data.image_url) {
+                    imageContainer.innerHTML = '<img src="' + data.image_url + '?t=' + Date.now() + '" alt="Uploaded Image">';
+                }
+            });
+        slider.value = 0;
+        brightnessValue.textContent = 0;
+    })
 </script>
+
 {% endblock %}
