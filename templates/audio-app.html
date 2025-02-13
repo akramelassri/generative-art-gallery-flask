@@ -25,7 +25,7 @@
     <!-- Audio Effects Section -->
     <div class="container">
         <button class="util-button" title="Audio Effects" data-bs-toggle="tooltip" data-bs-placement="right">
-            <i class="fa-solid fa-waveform"></i>
+            <i class="fa-solid fa-wave"></i>
         </button>
         <div class="dropdown">
             <button class="dropdown-btn" data-bs-toggle="modal" data-bs-target="#speedModal">
@@ -49,21 +49,13 @@
             <button class="dropdown-btn" onclick="saveAudio()">
                 <i class="fa-solid fa-floppy-disk"></i> Save
             </button>
-            <button class="dropdown-btn" onclick="undoAction()">
-                <i class="fa-solid fa-rotate-left"></i> Undo
-            </button>
-            <button class="dropdown-btn" onclick="redoAction()">
-                <i class="fa-solid fa-rotate-right"></i> Redo
-            </button>
             <button class="dropdown-btn" onclick="resetToOriginal()">
                 <i class="fa-solid fa-arrows-spin"></i> Reset
             </button>
         </div>
     </div>
 </div>
-
 {% endblock %}
-
 {% block maincontent %}
 <div class="container mt-4">
   <h1 class="text-center mb-4">Audio Editor</h1>
@@ -72,7 +64,7 @@
   <div class="card mx-auto shadow p-4" style="max-width: 600px;">
     <div class="d-flex align-items-center justify-content-between mb-3">
       <h5 class="mb-0">Now Playing: <span id="current-song">Song Title</span></h5>
-      <button id="play-pause-btn" class="btn btn-primary"><i class="fas fa-play"></i></button>
+      <button id="play-pause-btn" class="btn btn-primary" onclick="playPauseAudio()"><i class="fas fa-play"></i></button>
     </div>
     <audio id="audio-player" preload="metadata"></audio>
     <div class="progress">
@@ -104,59 +96,108 @@
     </div>
   </div>
 </div>
+<div class="modal fade" id="cutModal" tabindex="-1" aria-labelledby="cutModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="cutModalLabel">Cut Audio</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="cutStart" class="form-label" >Start Time (seconds):</label>
+          <input type="number" class="form-control" id="cutStart" step="0.1" min="0" value="0">
+        </div>
+        <div class="mb-3">
+          <label for="cutEnd" class="form-label">End Time (seconds):</label>
+          <input type="number" class="form-control" id="cutEnd" step="0.1" min="0" value="1">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="cutAudio()">Apply Cut</button>
+      </div>
+    </div>
+  </div>
+</div>
 
+<!-- Change Speed Modal -->
+<div class="modal fade" id="speedModal" tabindex="-1" aria-labelledby="speedModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="speedModalLabel">Change Speed</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="speedFactor" class="form-label">Speed Multiplier:</label>
+          <input type="number" class="form-control" id="speedFactor" step="0.1" min="0.1" max="5" value="1.0">
+          <div class="form-text">1.0 = normal speed, 0.5 = half speed, 2.0 = double speed</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="changeSpeed()">Apply Speed</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mix Audio Modal -->
+<div class="modal fade" id="mixModal" tabindex="-1" aria-labelledby="mixModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="mixModalLabel">Mix Audio</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="mixFile" class="form-label">Select Audio File to Mix:</label>
+          <input type="file" class="form-control" id="mixFile" accept=".mp3,.wav">
+        </div>
+        <div class="mb-3">
+          <label for="mixPosition" class="form-label">Mix Position (seconds):</label>
+          <input type="number" class="form-control" id="mixPosition" step="0.1" min="0" value="0">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="mixAudios()">Mix Audio</button>
+      </div>
+    </div>
+  </div>
+</div>
 <script>
-  let history = [];
-  let current_index = -1;
-  let original_audio = null;
-
+  let currentAudio = null;
   const audioPlayer = document.getElementById('audio-player');
 
-  // Update the audio player with the current audio
-  function updateAudio() {
-    const current_audio = history[current_index];
-    if (!current_audio) return;
-    const blob = current_audio.toBlob();
-    const url = URL.createObjectURL(blob);
-    audioPlayer.src = url;
-    audioPlayer.load();
-  }
+  // Sidebar dropdown functionality
+  const containers = document.querySelectorAll('.sidebar .container');
+  containers.forEach(container => {
+    const button = container.querySelector('.util-button');
+    const dropdown = container.querySelector('.dropdown');
 
+    // Toggle dropdown on button click
+    button.addEventListener('click', (event) => {
+      event.stopPropagation(); // Prevent immediate closing
+      closeAllDropdowns();
+      dropdown.classList.toggle('open');
+    });
+  });
+
+  // Close all dropdowns when clicking outside
+  document.addEventListener('click', closeAllDropdowns);
+
+  function closeAllDropdowns() {
+    document.querySelectorAll('.sidebar .dropdown.open')
+      .forEach(openDropdown => openDropdown.classList.remove('open'));
+  }
   // Show the modal when the "Load Audio" button is clicked
   function loadAudio() {
     const loadModal = new bootstrap.Modal(document.getElementById('loadAudioModal'));
     loadModal.show();
-  }
-
-  // Add audio to the history
-  async function addAudio() {
-    console.log("Add Audio function called.");
-
-    const fileInput = document.getElementById('audioFile');
-    if (!fileInput.files.length) {
-      alert("Please select an audio file.");
-      return;
-    }
-
-    const file = fileInput.files[0];
-    try {
-      console.log("Processing file:", file.name);
-
-      const arrayBuffer = await file.arrayBuffer();
-      const audio = await AudioSegment.fromArrayBuffer(arrayBuffer);
-
-      console.log("Audio loaded successfully.");
-      history = [audio]; // Reset history with the new audio
-      current_index = 0; // Set the current index to 0
-      original_audio = audio; // Store the original audio
-      updateAudio(); // Update the audio player
-      $('#loadAudioModal').modal('hide'); // Close the modal
-
-      alert("Audio loaded successfully!");
-    } catch (error) {
-      console.error("Error loading audio:", error);
-      alert("Failed to load the audio file. Please try again.");
-    }
   }
 
   // Play/pause functionality
@@ -169,136 +210,151 @@
       document.getElementById('play-pause-btn').innerHTML = '<i class="fas fa-play"></i>';
     }
   }
-
-  // Cut functionality
-  function cutAudio() {
-    const start = parseFloat(document.getElementById('cutStart').value) * 1000 || 0;
-    const end = parseFloat(document.getElementById('cutEnd').value) * 1000 || history[current_index].duration;
-    const new_audio = history[current_index].slice(start, end);
-    addHistory(new_audio);
-    $('#cutModal').modal('hide');
-  }
-
-  // Change speed functionality
-  function changeSpeed() {
-    const speedFactor = parseFloat(document.getElementById('speedFactor').value) || 1.0;
-    const new_audio = speedup(history[current_index], speedFactor);
-    addHistory(new_audio);
-    $('#speedModal').modal('hide');
-  }
-
-  // Mix functionality
-  async function mixAudios() {
-    const fileInput = document.getElementById('mixFile');
-    if (!fileInput.files.length) return;
-    const file = fileInput.files[0];
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const mix_audio = await AudioSegment.fromArrayBuffer(arrayBuffer);
-      const position = parseFloat(document.getElementById('mixPosition').value) * 1000 || 0;
-      const new_audio = history[current_index].overlay(mix_audio, position);
-      addHistory(new_audio);
-      $('#mixModal').modal('hide');
-    } catch (error) {
-      console.error("Error mixing audio:", error);
-      alert("Failed to mix audio files. Please try again.");
-    }
-  }
-
-  // Reverse functionality
-  function reverseAudio() {
-    const new_audio = history[current_index].reverse();
-    addHistory(new_audio);
-  }
-
-  // Save functionality
-  function saveAudio() {
-    const outputFormat = 'mp3'; // Simplified for demo
-    const outputName = 'edited_audio';
-    const blob = history[current_index].toBlob(outputFormat);
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${outputName}.${outputFormat}`;
-    a.click();
-  }
-
-  // Undo/Redo functionality
-  function undoAction() {
-    if (current_index > 0) {
-      current_index -= 1;
-      updateAudio();
-    } else {
-      alert("Already at earliest state");
-    }
-  }
-
-  function redoAction() {
-    if (current_index < history.length - 1) {
-      current_index += 1;
-      updateAudio();
-    } else {
-      alert("Already at latest state");
-    }
-  }
-
-  // Reset to original functionality
-  function resetToOriginal() {
-    if (original_audio) {
-      history = [original_audio];
-      current_index = 0;
-      updateAudio();
-    } else {
-      alert("No original audio loaded.");
-    }
-  }
-
-  // History management
-  function addHistory(new_audio) {
-    if (current_index < history.length - 1) {
-      history = history.slice(0, current_index + 1);
-    }
-    history.push(new_audio);
-    current_index = history.length - 1;
-    updateAudio();
-  }
-
-  // Progress bar and time updates
+// Audio Progress Updates
   audioPlayer.addEventListener('timeupdate', () => {
     const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
     document.getElementById('progress-bar').style.width = `${progress}%`;
     document.getElementById('current-time').textContent = formatTime(audioPlayer.currentTime);
-    document.getElementById('duration').textContent = formatTime(audioPlayer.duration);
+    
+    // Update duration display if needed
+    if (!isNaN(audioPlayer.duration)) {
+      document.getElementById('duration').textContent = formatTime(audioPlayer.duration);
+    }
   });
 
+  // Time Formatter
   function formatTime(seconds) {
     const minutes = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
   }
-  const containers = document.querySelectorAll('.sidebar .container');
-containers.forEach(container => {
-  const button = container.querySelector('.util-button');
-  const dropdown = container.querySelector('.dropdown');
 
-  // toggle on click
-  button.addEventListener('click', (event) => {
-    event.stopPropagation(); // stops immediate closing
-    closeAllDropdowns();
-    dropdown.classList.toggle('open');
-  });
-});
+  async function addAudio() {
+      const fileInput = document.getElementById('audioFile');
+      if (!fileInput.files.length) {
+          alert('Please select an audio file.');
+          return;
+      }
 
-// close on outside click
-document.addEventListener('click', closeAllDropdowns);
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
 
-function closeAllDropdowns() {
-  document.querySelectorAll('.sidebar .dropdown.open')
-    .forEach(openDropdown => openDropdown.classList.remove('open'));
-}
+      try {
+          const response = await fetch('/upload', {
+              method: 'POST',
+              body: formData
+          });
+
+          const result = await response.json();
+          if (result.error) {
+              throw new Error(result.error);
+          }
+
+          currentAudio = result.audio_url;
+          originalAudio = result.audio_url; 
+          audioPlayer.src = currentAudio;
+          audioPlayer.load();
+
+          // Close the modal without jQuery
+          const loadModal = bootstrap.Modal.getInstance(document.getElementById('loadAudioModal'));
+          loadModal.hide();
+      } catch (error) {
+          console.error('Upload error:', error);
+          alert('Upload failed: ' + error.message);
+      }
+  }
+  async function processAudio(endpoint, data) {
+      try {
+          const response = await fetch(endpoint, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(data)
+          });
+
+          const result = await response.json();
+          if (result.error) throw new Error(result.error);
+          
+          currentAudio = result.processed_url;
+          audioPlayer.src = currentAudio;
+          audioPlayer.load();
+          alert('Processing complete!');
+      } catch (error) {
+          console.error('Error:', error);
+          alert('Processing failed: ' + error.message);
+      }
+  }
+
+  function cutAudio() {
+      const data = {
+          action: 'cut',
+          start: parseFloat(document.getElementById('cutStart').value),
+          end: parseFloat(document.getElementById('cutEnd').value),
+          current_file: currentAudio
+      };
+      processAudio('/process', data);
+      const cutModal = bootstrap.Modal.getInstance(document.getElementById('cutModal'));
+      cutModal.hide();
+  }
+
+  function changeSpeed() {
+      const data = {
+          action: 'speed',
+          factor: parseFloat(document.getElementById('speedFactor').value),
+          current_file: currentAudio
+      };
+      processAudio('/process', data);
+      const speedModal = bootstrap.Modal.getInstance(document.getElementById('speedModal'));
+      speedModal.hide();
+  }
+
+  async function mixAudios() {
+      const fileInput = document.getElementById('mixFile');
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      formData.append('position', document.getElementById('mixPosition').value);
+      formData.append('current_file', currentAudio);
+
+      try {
+          const response = await fetch('/mix', {
+              method: 'POST',
+              body: formData
+          });
+
+          const result = await response.json();
+          if (result.error) throw new Error(result.error);
+          
+          currentAudio = result.mixed_url;
+          audioPlayer.src = currentAudio;
+          const mixModal = bootstrap.Modal.getInstance(document.getElementById('mixModal'));
+          mixModal.hide();
+      } catch (error) {
+          console.error('Mixing error:', error);
+          alert('Mixing failed: ' + error.message);
+      }
+  }
+
+  function reverseAudio() {
+      processAudio('/process', {
+          action: 'reverse',
+          current_file: currentAudio
+      });
+  }
+
+  function saveAudio() {
+      if (!currentAudio) return alert('No audio to save!');
+      const a = document.createElement('a');
+      a.href = currentAudio;
+      a.download = 'processed_audio.mp3';
+      a.click();
+  }
+
+  function resetToOriginal() {
+      if (confirm('Reset to original audio?')) {
+          audioPlayer.src = originalAudio;
+          audioPlayer.load();
+      }
+  }
 </script>
-<<<<<<< HEAD
 {% endblock %}
-=======
-{% endblock %}
->>>>>>> 29ad078d62e6a200398eaf2c2b43f75b794a29dd

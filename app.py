@@ -1,4 +1,3 @@
-from flask import Flask, render_template, request,jsonify, url_for
 from werkzeug.utils import secure_filename
 import numpy as np
 import cv2
@@ -6,8 +5,20 @@ from image.process_image import process_image_test
 import os 
 import subprocess
 import sys
-
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+import uuid
+import pandas as pd
+import matplotlib
+matplotlib.use('Agg')  # Required for non-GUI environments
+import matplotlib.pyplot as plt
+import seaborn as sns
+from wordcloud import WordCloud
+from werkzeug.utils import secure_filename
+from pydub import AudioSegment
 app = Flask(__name__)
+UPLOAD_FOLDER = 'static/uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['GALLERY_FOLDER'] = 'static/gallery'
@@ -40,9 +51,11 @@ def drawing_app():
     # Run the script using the same Python executable
     subprocess.Popen([venv_python, script_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return jsonify({"message": "Script started successfully!"}), 200
+
 @app.route("/data-app")
 def data_app():
     return render_template("data-app.html")
+
 
 @app.route("/image-app")
 def image_app():
@@ -92,23 +105,6 @@ def process_image():
 @app.route("/audio-app")
 def audio_app():
     return render_template("audio-app.html")
-
-
-@app.route("/upload-gallery", methods=['POST'])
-def upload_gallery():
-    data = request.get_json()
-    image_url = data.get("image_url")
-    filename = os.path.basename(image_url)
-    image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    img = cv2.imread(image_path)
-    if not hasattr(upload_gallery,"count"):
-        upload_gallery.count = 0
-    else:
-        upload_gallery.count += 1
-    image_path = os.path.join(app.config['GALLERY_FOLDER'], str(upload_gallery.count) + filename)
-    cv2.imwrite(image_path, img)
-    return jsonify({"message": "Image Saved"}), 200
-
 
 if __name__ == '__main__':
     app.run(debug=True)
