@@ -49,7 +49,7 @@
 </div>
 <div class="container2">
     <div class="container">
-        <button class="util-button" title="Save File" data-bs-toggle="tooltip" data-bs-placement="right" id="savebtn">
+        <button class="util-button" title="Save File to Gallery" data-bs-toggle="tooltip" data-bs-placement="right" id="savebtn">
             <i class="fa-solid fa-floppy-disk"></i> </button>
     </div>
     <div class="container">
@@ -69,6 +69,7 @@
     <input type="file" id="uploadInput" accept="image/png, image/jpeg" style="display: none;">
     <label for="uploadInput" class="action-button" id="uploadBtn">Upload Image</label>
 </div>
+<div id="snackbar"></div>
 <script>
     document.getElementById('uploadInput').addEventListener('change', function () {
         var file = this.files[0];
@@ -165,7 +166,7 @@
             .then(data => {
                 if (data.image_url) {
                     imageContainer.innerHTML = '<img src="' + data.image_url + '?t=' + Date.now() + '" alt="Uploaded Image">';
-                }
+                };
             });
     });
     document.querySelector("#blur").addEventListener('click', function () {
@@ -365,6 +366,31 @@
         brightnessValue.textContent = 0;
     })
     document.getElementById("savebtn").addEventListener("click", function () {
+        try{
+            uploaded_image = processed_image_url
+        }catch(error){
+            uploaded_image = image_url_global
+        }
+        fetch("{{ url_for('upload_gallery') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "image_url": uploaded_image,
+            })
+
+
+        }).then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    let snackbar = document.getElementById("snackbar");
+                    snackbar.innerHTML = data.message;
+                    snackbar.classList.add("show");
+                 setTimeout(() => snackbar.classList.remove("show"), 1000);
+                }
+
+            });
 });
 document.getElementById("exportbtn").addEventListener("click", function () {
     const link = document.createElement("a"); 

@@ -10,6 +10,11 @@ import sys
 app = Flask(__name__)
 
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['GALLERY_FOLDER'] = 'static/gallery'
+def get_gallery_images():
+    # List all image files (adjust extensions as needed)
+    images = [f for f in os.listdir(app.config['GALLERY_FOLDER']) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
+    return images
 
 @app.route("/")
 @app.route("/home")
@@ -18,7 +23,8 @@ def home_page():
 
 @app.route("/gallery")
 def gallery_page():
-    return render_template("gallery.html")
+    images = get_gallery_images()
+    return render_template('gallery.html', images=images)
 
 @app.route("/apps")
 def apps_page():
@@ -69,11 +75,8 @@ def upload():
 def process_image():
     data = request.get_json()
     image_url = data.get("image_url")
-    print(type(image_url))
     type_process = data.get("type_process")
     name_process = data.get("name_process")
-    if not hasattr(process_image, "previous_effect"): 
-        process_image.previous_effect = type_process
     value = int(data.get("value"))
     img = cv2.imread(image_url)
     filename = os.path.basename(image_url)  # Extracts "example.jpg"
@@ -89,6 +92,23 @@ def process_image():
 @app.route("/audio-app")
 def audio_app():
     return render_template("audio-app.html")
+
+
+@app.route("/upload-gallery", methods=['POST'])
+def upload_gallery():
+    data = request.get_json()
+    image_url = data.get("image_url")
+    filename = os.path.basename(image_url)
+    image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    img = cv2.imread(image_path)
+    if not hasattr(upload_gallery,"count"):
+        upload_gallery.count = 0
+    else:
+        upload_gallery.count += 1
+    image_path = os.path.join(app.config['GALLERY_FOLDER'], str(upload_gallery.count) + filename)
+    cv2.imwrite(image_path, img)
+    return jsonify({"message": "Image Saved"}), 200
+
 
 if __name__ == '__main__':
     app.run(debug=True)
