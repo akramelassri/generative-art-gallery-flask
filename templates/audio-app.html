@@ -251,6 +251,7 @@
           }
 
           currentAudio = result.audio_url;
+          originalAudio = result.audio_url; 
           audioPlayer.src = currentAudio;
           audioPlayer.load();
 
@@ -351,7 +352,7 @@
 
   function resetToOriginal() {
       if (confirm('Reset to original audio?')) {
-          audioPlayer.src = currentAudio;
+          audioPlayer.src = originalAudio;
           audioPlayer.load();
       }
   }

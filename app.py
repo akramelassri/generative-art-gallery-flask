@@ -17,11 +17,8 @@ from werkzeug.utils import secure_filename
 from pydub import AudioSegment
 app = Flask(__name__)
 UPLOAD_FOLDER = 'static/uploads'
-PROCESSED_FOLDER = 'static/processed'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['PROCESSED_FOLDER'] = PROCESSED_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(PROCESSED_FOLDER, exist_ok=True)
 
 
 @app.route("/")
@@ -105,13 +102,14 @@ def process_image():
 def audio_app():
     return render_template("audio-app.html")
 
-# Helper functions
+# Vérification du type de fichier
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'wav', 'mp3'}
 
+# Traitement de l'audio
 def process_audio(action, input_path, output_path, **kwargs):
     audio = AudioSegment.from_file(input_path)
-    
+
     if action == 'cut':
         start = kwargs.get('start', 0) * 1000
         end = kwargs.get('end', len(audio)) * 1000
@@ -121,57 +119,71 @@ def process_audio(action, input_path, output_path, **kwargs):
         audio = audio.speedup(playback_speed=speed)
     elif action == 'reverse':
         audio = audio.reverse()
-    
+
     audio.export(output_path, format="mp3")
     return output_path
 
+# Endpoint pour uploader un fichier
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
         return jsonify({'error': 'No file uploaded'}), 400
-    
+
     file = request.files['file']
     if file.filename == '' or not allowed_file(file.filename):
         return jsonify({'error': 'Invalid file'}), 400
-    
+
     filename = str(uuid.uuid4()) + os.path.splitext(file.filename)[1]
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    file.save(filepath)
-    
-    return jsonify({
-        'audio_url': f'/static/uploads/{filename}'
-    })
 
+    file.save(filepath)
+
+    return jsonify({'audio_url': f'/static/uploads/{filename}'})
+
+# Endpoint pour traiter un fichier audio
 @app.route('/process', methods=['POST'])
 def process_file():
     data = request.json
     input_url = data['current_file']
     action = data['action']
-    
-    # Convert URL to local path
+
     input_path = os.path.join(app.config['UPLOAD_FOLDER'], os.path.basename(input_url))
 
-    
-    # Create output path
     output_filename = f"processed_{uuid.uuid4()}.mp3"
-    output_path = os.path.join(app.config['PROCESSED_FOLDER'], output_filename)
-    
-    # Process audio
+    output_path = os.path.join(app.config['UPLOAD_FOLDER'], output_filename)
+
     try:
         data.pop('action', None)
         process_audio(action, input_path, output_path, **data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
-    return jsonify({
-        'processed_url': f'/static/processed/{output_filename}'
-    })
 
+    return jsonify({'processed_url': f'/static/uploads/{output_filename}'})
 @app.route('/mix', methods=['POST'])
 def mix_audio():
-    # Similar structure for mixing audio
-    # (Implementation depends on your specific mixing requirements)
-    pass
+    if 'file' not in request.files or 'current_file' not in request.form:
+        return jsonify({'error': 'Missing files'}), 400
+    
+    mix_file = request.files['file']
+    current_file = request.form['current_file']
+    
+    if mix_file.filename == '' or not allowed_file(mix_file.filename):
+        return jsonify({'error': 'Invalid file'}), 400
+    
+    input_path = os.path.join(app.config['UPLOAD_FOLDER'], os.path.basename(current_file))
+    mix_filename = str(uuid.uuid4()) + os.path.splitext(mix_file.filename)[1]
+    mix_path = os.path.join(app.config['UPLOAD_FOLDER'], mix_filename)
+    mix_file.save(mix_path)
+    
+    audio1 = AudioSegment.from_file(input_path)
+    audio2 = AudioSegment.from_file(mix_path)
+    
+    mixed_audio = audio1.overlay(audio2)
+    output_filename = f"mixed_{uuid.uuid4()}.mp3"
+    output_path = os.path.join(app.config['UPLOAD_FOLDER'], output_filename)
+    
+    mixed_audio.export(output_path, format="mp3")
+    return jsonify({'mixed_url': f'/static/uploads/{output_filename}'})
 
 
 if __name__ == '__main__':

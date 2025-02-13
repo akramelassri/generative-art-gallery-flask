@@ -148,17 +148,30 @@
         updatePlotOptions(selectedColumns);
     });
 
-    // Generate visualization
-    document.getElementById('generate-visualization').addEventListener('click', () => {
-        const selectedColumns = Array.from(document.getElementById('select-columns').selectedOptions).map(opt => opt.value);
-        const plotType = document.getElementById('select-plot').value;
+    // Update the plot generation handler
+document.getElementById('generate-visualization').addEventListener('click', () => {
+    const selectedColumns = Array.from(document.getElementById('select-columns').selectedOptions).map(opt => opt.value);
+    const plotType = document.getElementById('select-plot').value;
 
-        if (selectedColumns.length === 0 || plotType === '') {
-            alert('Please select columns and a visualization type.');
+    fetch('/generate-plot', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            columns: selectedColumns,
+            plot_type: plotType
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
             return;
         }
-
-        alert(`Generating ${plotType} for columns: ${selectedColumns.join(', ')}`);
-    });
+        // Display the plot - you'll need to add an img element with this URL
+        const plotContainer = document.getElementById('plot-container');
+        plotContainer.innerHTML = `<img src="${data.plot_url}" alt="Generated Plot">`;
+    })
+    .catch(error => console.error('Error:', error));
+});
 </script>
 {%endblock%}
