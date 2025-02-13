@@ -1,4 +1,3 @@
-from flask import Flask, render_template, request,jsonify, url_for
 from werkzeug.utils import secure_filename
 import numpy as np
 import cv2
@@ -6,10 +5,24 @@ from image.process_image import process_image_test
 import os 
 import subprocess
 import sys
-
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+import uuid
+import pandas as pd
+import matplotlib
+matplotlib.use('Agg')  # Required for non-GUI environments
+import matplotlib.pyplot as plt
+import seaborn as sns
+from wordcloud import WordCloud
+from werkzeug.utils import secure_filename
+from pydub import AudioSegment
 app = Flask(__name__)
+UPLOAD_FOLDER = 'static/uploads'
+PROCESSED_FOLDER = 'static/processed'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['PROCESSED_FOLDER'] = PROCESSED_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(PROCESSED_FOLDER, exist_ok=True)
 
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
 @app.route("/")
 @app.route("/home")
@@ -34,9 +47,11 @@ def drawing_app():
     # Run the script using the same Python executable
     subprocess.Popen([venv_python, script_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return jsonify({"message": "Script started successfully!"}), 200
+
 @app.route("/data-app")
 def data_app():
     return render_template("data-app.html")
+
 
 @app.route("/image-app")
 def image_app():
@@ -89,6 +104,75 @@ def process_image():
 @app.route("/audio-app")
 def audio_app():
     return render_template("audio-app.html")
+
+# Helper functions
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'wav', 'mp3'}
+
+def process_audio(action, input_path, output_path, **kwargs):
+    audio = AudioSegment.from_file(input_path)
+    
+    if action == 'cut':
+        start = kwargs.get('start', 0) * 1000
+        end = kwargs.get('end', len(audio)) * 1000
+        audio = audio[start:end]
+    elif action == 'speed':
+        speed = kwargs.get('factor', 1.0)
+        audio = audio.speedup(playback_speed=speed)
+    elif action == 'reverse':
+        audio = audio.reverse()
+    
+    audio.export(output_path, format="mp3")
+    return output_path
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+    
+    file = request.files['file']
+    if file.filename == '' or not allowed_file(file.filename):
+        return jsonify({'error': 'Invalid file'}), 400
+    
+    filename = str(uuid.uuid4()) + os.path.splitext(file.filename)[1]
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(filepath)
+    
+    return jsonify({
+        'audio_url': f'/static/uploads/{filename}'
+    })
+
+@app.route('/process', methods=['POST'])
+def process_file():
+    data = request.json
+    input_url = data['current_file']
+    action = data['action']
+    
+    # Convert URL to local path
+    input_path = os.path.join(app.config['UPLOAD_FOLDER'], os.path.basename(input_url))
+
+    
+    # Create output path
+    output_filename = f"processed_{uuid.uuid4()}.mp3"
+    output_path = os.path.join(app.config['PROCESSED_FOLDER'], output_filename)
+    
+    # Process audio
+    try:
+        data.pop('action', None)
+        process_audio(action, input_path, output_path, **data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+    return jsonify({
+        'processed_url': f'/static/processed/{output_filename}'
+    })
+
+@app.route('/mix', methods=['POST'])
+def mix_audio():
+    # Similar structure for mixing audio
+    # (Implementation depends on your specific mixing requirements)
+    pass
+
 
 if __name__ == '__main__':
     app.run(debug=True)
