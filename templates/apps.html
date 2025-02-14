@@ -3,4 +3,47 @@
 {% block title %}Apps{% endblock %}
 
 {% block maincontent %}
+<!-- MAIN CONTENT -->
+<div class="content">
+    <h1 class="mb-4">Apps</h1>
+    
+    <!-- Vertical List of App Buttons with Descriptions -->
+    <div class="apps-list">
+        <div class="app-item mb-4">
+            <a href="{{ url_for('drawing_app') }}" class="btn-square" type="button" title="Draw App" data-bs-toggle="tooltip" data-bs-placement="top">
+                <i class="fa-solid fa-shapes"></i>
+            </a>
+            <p class="mt-2">Draw App: Create and design drawings with various tools and brushes.</p>
+        </div>
+        
+        <div class="app-item mb-4">
+            <a href="{{ url_for('data_app') }}" class="btn-square" type="button" title="Data Visualization" data-bs-toggle="tooltip" data-bs-placement="top">
+                <i class="fas fa-chart-line"></i>
+            </a>
+            <p class="mt-2">Data Visualization: Explore and analyze data using interactive charts and graphs.</p>
+        </div>
+        
+        <div class="app-item mb-4">
+            <a href="{{ url_for('image_app') }}" class="btn-square" type="button" title="Image App" data-bs-toggle="tooltip" data-bs-placement="top">
+                <i class="fas fa-image"></i>
+            </a>
+            <p class="mt-2">Image App: Edit and enhance your images with a variety of tools and filters.</p>
+        </div>
+        
+        <div class="app-item mb-4">
+            <a href="{{ url_for('audio_app') }}" class="btn-square" type="button" title="Audio App" data-bs-toggle="tooltip" data-bs-placement="top">
+                <i class="fa-solid fa-file-audio"></i>
+            </a>
+            <p class="mt-2">Audio App: Create, edit, and process audio files using intuitive controls.</p>
+        </div>
+        
+        <div class="app-item mb-4">
+            <!-- Using a button for Style Transfer as in base.html -->
+            <a href="#" class="btn-square" type="button" title="Style Transfer" data-bs-toggle="tooltip" data-bs-placement="top">
+                <i class="fas fa-paint-brush"></i>
+            </a>
+            <p class="mt-2">Style Transfer: Apply artistic styles to your images to transform their look.</p>
+        </div>
+    </div>
+</div>
 {% endblock %}

@@ -27,15 +27,23 @@ app.config['ALLOWED_EXTENSIONS'] = {'csv', 'xls', 'xlsx'}
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB limit
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['GALLERY_FOLDER'] = 'static/gallery'
+def get_gallery_images():
+    # List all image files (adjust extensions as needed)
+    images = [f for f in os.listdir(app.config['GALLERY_FOLDER']) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
+    return images
 
 @app.route("/")
 @app.route("/home")
 def home_page():
-    return render_template("home.html")
+    images = get_gallery_images()
+    return render_template("home.html", images=images)
 
 @app.route("/gallery")
 def gallery_page():
-    return render_template("gallery.html")
+    images = get_gallery_images()
+    return render_template('gallery.html', images=images)
 
 @app.route("/apps")
 def apps_page():
@@ -50,7 +58,7 @@ def drawing_app():
 
     # Run the script using the same Python executable
     subprocess.Popen([venv_python, script_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    return jsonify({"message": "Script started successfully!"}), 200
+    return jsonify({"message": "App started successfully!"}), 200
 
 # Helper functions
 
@@ -259,11 +267,8 @@ def upload():
 def process_image():
     data = request.get_json()
     image_url = data.get("image_url")
-    print(type(image_url))
     type_process = data.get("type_process")
     name_process = data.get("name_process")
-    if not hasattr(process_image, "previous_effect"): 
-        process_image.previous_effect = type_process
     value = int(data.get("value"))
     img = cv2.imread(image_url)
     filename = os.path.basename(image_url)  # Extracts "example.jpg"
@@ -280,7 +285,6 @@ def process_image():
 def audio_app():
     return render_template("audio-app.html")
 
-# Vérification du type de fichier
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'wav', 'mp3'}
 
@@ -362,6 +366,22 @@ def mix_audio():
     
     mixed_audio.export(output_path, format="mp3")
     return jsonify({'mixed_url': f'/static/uploads/{output_filename}'})
+
+
+@app.route("/upload-gallery", methods=['POST'])
+def upload_gallery():
+    data = request.get_json()
+    image_url = data.get("image_url")
+    filename = os.path.basename(image_url)
+    image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    img = cv2.imread(image_path)
+    if not hasattr(upload_gallery,"count"):
+        upload_gallery.count = 0
+    else:
+        upload_gallery.count += 1
+    image_path = os.path.join(app.config['GALLERY_FOLDER'], str(upload_gallery.count) + filename)
+    cv2.imwrite(image_path, img)
+    return jsonify({"message": "Image Saved"}), 200
 
 
 if __name__ == '__main__':

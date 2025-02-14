@@ -3,4 +3,42 @@
 {% block title %}Gallery{% endblock %}
 
 {% block maincontent %}
+<div class="content">
+  <h1 class="mb-4">Gallery</h1>
+  <div class="row row-cols-1 row-cols-md-3 g-4">
+    {% for image in images %}
+    <div class="col">
+      <div class="card">
+        <img src="{{ url_for('static', filename='gallery/' ~ image) }}" 
+             class="card-img-top" 
+             alt="{{ image }}"
+             data-bs-toggle="modal" 
+             data-bs-target="#imageModal" 
+             data-image="{{ url_for('static', filename='gallery/' ~ image) }}">
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Modal for Image Preview -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-body">
+        <img src="" id="modalImage" class="img-fluid" alt="Image Preview">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Update modal image source when an image is clicked
+  var imageModal = document.getElementById('imageModal');
+  imageModal.addEventListener('show.bs.modal', function (event) {
+    var triggerImage = event.relatedTarget;
+    var imageSrc = triggerImage.getAttribute('data-image');
+    document.getElementById('modalImage').src = imageSrc;
+  });
+</script>
 {% endblock %}
