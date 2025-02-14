@@ -4,10 +4,9 @@
 
 ### **1. Clone the Repository**
 ```bash
-git clone https://github.com/your-username/interactive-art-gallery.git
-cd interactive-art-gallery
+git clone https://github.com/akramelassri/generative-art-gallery-flask.git
+cd    generative-art-gallery-flask
 ```
-_(Replace `your-username` with your actual GitHub username)_
 
 ### **2. Create a Virtual Environment**
 ```bash
