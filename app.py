@@ -16,6 +16,7 @@ from wordcloud import WordCloud
 from werkzeug.utils import secure_filename
 from pydub import AudioSegment
 from dotenv import load_dotenv
+import traceback
 
 load_dotenv()
 
@@ -166,19 +167,43 @@ def clean_data():
 @app.route('/get_plots', methods=['POST'])
 def get_available_plots():
     data = request.json
-    columns = data.get('columns', [])
     file_id = data.get('file_id')
+    columns = data.get('columns', [])
 
     try:
-        # Find cleaned file
-        cleaned_file = next(f for f in os.listdir(app.config['UPLOAD_FOLDER']) if f.startswith(f"cleaned_{file_id}"))
-        df = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], cleaned_file))
+        # Improved file finding with error handling
+        cleaned_files = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if
+                         f.startswith(f"cleaned_{file_id}")]  # Get all matching files
+
+        if not cleaned_files:
+            return jsonify({'error': f"No cleaned file found for file_id: {file_id}"}, 400)  # Return 400
+
+        cleaned_file = cleaned_files[0]  # Take the first match
+        cleaned_path = os.path.join(app.config['UPLOAD_FOLDER'], cleaned_file)
+
+        # Check if the file actually exists before trying to read it
+        if not os.path.exists(cleaned_path):
+            return jsonify({'error': f"Cleaned file not found at path: {cleaned_path}"}, 400)
+
+        df = pd.read_csv(cleaned_path)
+
+        if df.empty:
+            return jsonify({'error': "The cleaned data file is empty."}), 400
+
+        # Ensure the requested columns exist in the DataFrame
+        for col in columns:
+            if col not in df.columns:
+                return jsonify({'error': f"Column '{col}' not found in the cleaned data."}), 400
 
         # Determine available plot types
         plot_types = []
-        numeric_cols = df[columns].select_dtypes(include='number').columns
+        # Select only selected columns
+        numeric_cols = df[columns].select_dtypes(include=np.number).columns
         text_cols = df[columns].select_dtypes(include='object').columns
-
+        print(numeric_cols)
+        print(text_cols)
+        #print(numeric_cols)
+        #print(text_cols)
         if len(numeric_cols) >= 1:
             plot_types.extend(['Histogram', 'Box Plot'])
         if len(numeric_cols) >= 2:
@@ -187,12 +212,13 @@ def get_available_plots():
             plot_types.append('Word Cloud')
         if len(numeric_cols) >= 2 and len(text_cols) >= 1:
             plot_types.append('Heatmap')
-
+        print(plot_types)
         return jsonify({'plots': list(set(plot_types))})
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
+        error_message = traceback.format_exc()
+        print(error_message)  # Log the full traceback to the console
+        return jsonify({'error': str(e), 'traceback': error_message}), 500 # Return the traceback
 # Endpoint 4: Generate Visualization
 @app.route('/generate-plot', methods=['POST'])
 def generate_visualization():
@@ -203,8 +229,28 @@ def generate_visualization():
 
     try:
         # Find cleaned file
-        cleaned_file = next(f for f in os.listdir(app.config['UPLOAD_FOLDER']) if f.startswith(f"cleaned_{file_id}"))
-        df = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], cleaned_file))
+        cleaned_files = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if
+                         f.startswith(f"cleaned_{file_id}")]  # Get all matching files
+
+        if not cleaned_files:
+            return jsonify({'error': f"No cleaned file found for file_id: {file_id}"}, 400)  # Return 400
+
+        cleaned_file = cleaned_files[0]  # Take the first match
+        cleaned_path = os.path.join(app.config['UPLOAD_FOLDER'], cleaned_file)
+
+        # Check if the file actually exists before trying to read it
+        if not os.path.exists(cleaned_path):
+            return jsonify({'error': f"Cleaned file not found at path: {cleaned_path}"}, 400)
+
+        df = pd.read_csv(cleaned_path)
+
+        if df.empty:
+            return jsonify({'error': "The cleaned data file is empty."}), 400
+            
+        # Ensure the requested columns exist in the DataFrame
+        for col in columns:
+            if col not in df.columns:
+                return jsonify({'error': f"Column '{col}' not found in the cleaned data."}), 400
 
         # Generate plot
         plot_filename = f"plot_{uuid.uuid4()}.png"
@@ -215,11 +261,11 @@ def generate_visualization():
         if plot_type == 'Histogram':
             sns.histplot(df[columns[0]])
         elif plot_type == 'Scatter Plot':
-            sns.scatterplot(x=columns[0], y=columns[1], data=df)
+            sns.scatterplot(x=columns[0], y=columns[1], data=df[columns])
         elif plot_type == 'Line Plot':
-            sns.lineplot(x=columns[0], y=columns[1], data=df)
+            sns.lineplot(x=columns[0], y=columns[1], data=df[columns])
         elif plot_type == 'Box Plot':
-            sns.boxplot(x=df[columns[0]])
+            sns.boxplot(x=df[columns[0]],data=df[columns])
         elif plot_type == 'Heatmap':
             sns.heatmap(df[columns].corr(), annot=True)
         
@@ -233,9 +279,9 @@ def generate_visualization():
         })
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
+        error_message = traceback.format_exc()
+        print(error_message)  # Log the full traceback to the console
+        return jsonify({'error': str(e), 'traceback': error_message}), 500 # Return the traceback
 @app.route("/image-app")
 def image_app():
     return render_template("image-app.html")

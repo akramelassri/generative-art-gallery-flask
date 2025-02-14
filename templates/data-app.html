@@ -1,3 +1,4 @@
+--- START OF FILE data-app.html ---
 {% extends "base-apps.html" %}
 
 {% block title %}Data Visualization App{% endblock %}
@@ -72,49 +73,48 @@
     </section>
     
     <!-- Data Visualization Section (Hidden initially) -->
-    <section id="visualize-data" class="mb-5" style="display:none;">
-        <h2>Visualize Your Data</h2>
-        <p>Select columns and generate visualizations:</p>
-        <div class="card">
-            <div class="card-body">
-                <div class="mb-3">
-                    <label for="select-columns" class="form-label">Select Columns:</label>
-                    <select id="select-columns" name="select-columns" class="form-select" multiple>
-                        <!-- Columns will be dynamically populated here -->
-                    </select>
-                </div>
-                <div class="mb-3">
+    <!-- Data Visualization Section -->
+<section id="visualize-data" class="mb-5" style="display:none;">
+    <h2>Visualize Your Data</h2>
+    <p>Select columns and generate visualizations:</p>
+    <div class="card">
+        <div class="card-body">  
+            <div class="mb-3">
+                <label for="select-columns" class="form-label">Select Columns:</label>
+                <select id="select-columns" name="select-columns" class="form-select" multiple>
+                    <!-- Columns will be dynamically populated here -->
+                </select>
+            </div>
+            <button type="button" class="btn btn-success" id="get-plot-types">Get Plot Types</button>
+            
+            <div class="mb-3" id="select-plot_show" style="display: none;">
                     <label for="select-plot" class="form-label">Select Visualization Type:</label>
                     <select id="select-plot" name="select-plot" class="form-select">
-                        <option value="Histogram">Histogram</option>
-                        <option value="Scatter Plot">Scatter Plot</option>
-                        <option value="Line Plot">Line Plot</option>
-                        <option value="Bar Chart">Bar Chart</option>
-                        <option value="Box Plot">Box Plot</option>
-                        <option value="Word Cloud">Word Cloud</option>
-                        <option value="Heatmap">Heatmap</option>
+                        <!-- Add options here -->
                     </select>
                 </div>
-                <button type="button" class="btn btn-success" id="generate-visualization">Generate Visualization</button>
-            </div>
+             <button type="button" class="btn btn-success" id="generate-visualization" style="display: none;">Generate Visualization</button>
         </div>
-        <!-- Container to display the generated plot -->
-        <div id="plot-container" class="mt-4"></div>
-    </section>
+    </div>
+    <!-- Container to display the generated plot -->
+    <div id="plot-container" class="mt-4"></div>
+</section>
 </div>
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        
+    function init() {
+        console.log("Initializing the data-app script.");
+
         let storedFileId = '';
         let storedOriginalFilename = '';
-    
+        let columns_saved = [];
+
         // Attach event listener to the upload form
         const form = document.getElementById('upload-form');
         if (!form) {
           console.error("Upload form not found!");
           return;
         }
-        
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             console.log("Upload form submitted.");
@@ -126,12 +126,13 @@
                 });
                 const result = await response.json();
                 console.log("Server response:", result);
-                
+
                 if (response.ok) {
                     // Show cleaning section and populate columns
                     document.getElementById('clean-data').style.display = 'block';
                     populateColumns(result.columns);
-                    
+                    columns_saved =result.columns;
+
                     // Store file details for further processing
                     storedFileId = result.file_id;
                     storedOriginalFilename = result.original_filename;
@@ -143,7 +144,7 @@
                 alert(error.message);
             }
         });
-    
+
         // Handle data cleaning
         document.getElementById('start-cleaning').addEventListener('click', async () => {
             const cleaningOptions = {
@@ -154,7 +155,7 @@
               handleOutliers: document.getElementById('handle-outliers').checked,
               cleanText: document.getElementById('clean-text').checked
             };
-    
+
             const payload = {
                 file_id: storedFileId,
                 original_filename: storedOriginalFilename,
@@ -169,24 +170,24 @@
                 });
                 const result = await response.json();
                 console.log("Cleaning response:", result);
-                
-                if (!response.ok || result.error) {
+
+                if (response.ok) {
+                    // Transition to visualization section
+                    document.getElementById('clean-data').style.display = 'none';
+                    document.getElementById('visualize-data').style.display = 'block';
+
+                    // Update columns if available
+                    
+                    alert('Data cleaning completed successfully!');
+                } else {
                     throw new Error(result.error || 'Data cleaning failed.');
                 }
-                
-                // Transition to visualization section
-                document.getElementById('clean-data').style.display = 'none';
-                document.getElementById('visualize-data').style.display = 'block';
-                
-                // Update columns if available
-                populateColumns(result.columns || []);
-                alert('Data cleaning completed successfully!');
             } catch (error) {
                 console.error('Cleaning error:', error);
                 alert('Cleaning failed: ' + error.message);
             }
         });
-    
+
         // Function to populate the dropdown with column names
         function populateColumns(columns) {
             const select = document.getElementById('select-columns');
@@ -200,46 +201,45 @@
                 });
             }
         }
-    
-        // Update available plot options based on selected columns
-        document.getElementById('select-columns').addEventListener('change', () => {
-            const selectedColumns = Array.from(document.getElementById('select-columns').selectedOptions)
-                                         .map(opt => opt.value);
-            updatePlotOptions(selectedColumns);
-        });
-    
-        function updatePlotOptions(columns) {
-            const selectPlot = document.getElementById('select-plot');
-            selectPlot.innerHTML = '';
-            fetch('/get_plots', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ columns: columns })
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log("Available plots:", data.plots);
-                data.plots.forEach(plot => {
-                    const option = document.createElement('option');
-                    option.value = plot;
-                    option.textContent = plot;
-                    selectPlot.appendChild(option);
-                });
-            })
-            .catch(error => console.error('Error fetching plots:', error));
-        }
-    
+
         // Generate visualization based on user selections
-        document.getElementById('generate-visualization').addEventListener('click', async () => {
+                // Generate visualization based on user selections
+                document.getElementById('get-plot-types').addEventListener('click', async () => {
             const selectedColumns = Array.from(document.getElementById('select-columns').selectedOptions)
                                          .map(opt => opt.value);
-            const plotType = document.getElementById('select-plot').value;
+            console.log("get Available plots");
+            try {
+                const response = await fetch('/get_plots', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        file_id: storedFileId,
+                        columns: selectedColumns,
+                    })
+                });
+                const data = await response.json();
+                console.log(data.plots);
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                // Display the generated plot
+                display_seletc_plot(data.plots)
+            } catch (error) {
+                console.error('Error generating plot:', error);
+            }
+        });
+         document.getElementById('generate-visualization').addEventListener('click', async () => {
+            const selectedColumns = Array.from(document.getElementById('select-columns').selectedOptions)
+                                         .map(opt => opt.value);
+            const plotType =  document.getElementById('select-plot').value;
             console.log("Generating plot for columns:", selectedColumns, "with plot type:", plotType);
             try {
                 const response = await fetch('/generate-plot', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
+                        file_id: storedFileId,
                         columns: selectedColumns,
                         plot_type: plotType
                     })
@@ -255,10 +255,22 @@
                 console.error('Error generating plot:', error);
             }
         });
-    });
-    </script>
-{% endblock %}
-
-{% block scripts %}
-
+        function display_seletc_plot(plots){
+            const selectPlot = document.getElementById('select-plot');
+            selectPlot.innerHTML = '';
+            for (let plot of plots){
+                const option = document.createElement('option');
+                option.value = plot;
+                option.textContent = plot;
+                selectPlot.appendChild(option);
+                document.getElementById('select-plot_show').style.display = 'block';
+                document.getElementById('generate-visualization').style.display = 'block';
+            }
+        }
+        
+    }
+</script>
+<script>
+    init();
+</script>
 {% endblock %}
