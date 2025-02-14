@@ -30,6 +30,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['GALLERY_FOLDER'] = 'static/gallery'
+os.makedirs('static/gallery', exist_ok=True)
 def get_gallery_images():
     # List all image files (adjust extensions as needed)
     images = [f for f in os.listdir(app.config['GALLERY_FOLDER']) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
