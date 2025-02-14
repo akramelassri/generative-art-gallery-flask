@@ -36,4 +36,8 @@ http://127.0.0.1:5000/
 ```
 
 ---
+### **6. Demo Video and rapport
+demo video: output_trimmed.mp4
+rapport: Interactive art gallery.pdf
+
 
