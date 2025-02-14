@@ -85,7 +85,7 @@ def allowed_file_data(filename):
     is_allowed = ext in app.config['ALLOWED_EXTENSIONS']
     return is_allowed
 
-@app.route('/data-app/upload', methods=['POST'])
+@app.route('/upload-filetest', methods=['POST'])
 def handle_file_upload():
     if 'data-file' not in request.files:
         return jsonify({'error': 'No file uploaded'}), 400
