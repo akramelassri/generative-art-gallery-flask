@@ -166,19 +166,13 @@ class DrawAppState(State):
         self._previewed_shape = draw.Circle((0, 0), 20, (255, 0, 0))
         self._selected_shape = None
         self._drag_offset = None
-
+        self._active_shape = None
     def make_ui(self, screen):
         # Main side panel (using the same theme as other buttons)
         self._side_pannel_menu = pygame_gui.elements.UIPanel(
             relative_rect=pygame.Rect(0, 0, 70, screen.get_height()),
             manager=self._manager,
             anchors={'top': 'top', 'left': 'left'}
-        )
-        self._color_picker = pygame_gui.elements.UIDropDownMenu(
-            options_list=["test", "testttt"],
-            starting_option='test',
-            relative_rect=pygame.Rect(80, 20, 100, 30),
-            manager=self._manager,
         )
         self._menu_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(10, 10, 32, 32),
@@ -231,21 +225,6 @@ class DrawAppState(State):
             container=self._side_pannel_menu,
             object_id="rose_button"
         )
-        self._lissajous_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(10, 290, 32, 32),
-            manager=self._manager,
-            text="Lissa",
-            container=self._side_pannel_menu,
-            object_id="lissajous_button"
-        )
-        self._fourier_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(10, 330, 32, 32),
-            manager=self._manager,
-            text="Four",
-            container=self._side_pannel_menu,
-            object_id="fourier_button"
-        )
-
     def draw_ui(self, screen, time_delta, pos):            
         screen.fill((110, 120, 110))
         self._manager.update(time_delta)
@@ -302,21 +281,15 @@ class DrawAppState(State):
                     center = (random.randint(0, screen.get_width()), random.randint(0, screen.get_height()))
                     img_shape = draw.ImageShape(center, pattern_surf)
                     self.drawing_canva.add_shape(img_shape)
-                elif event.ui_element == self._lissajous_button:
-                    pattern_surf = draw.generate_lissajous_pattern()
-                    center = (random.randint(0, screen.get_width()), random.randint(0, screen.get_height()))
-                    img_shape = draw.ImageShape(center, pattern_surf)
-                    self.drawing_canva.add_shape(img_shape)
-                elif event.ui_element == self._fourier_button:
-                    pattern_surf = draw.generate_fourier_pattern()
-                    center = (random.randint(0, screen.get_width()), random.randint(0, screen.get_height()))
-                    img_shape = draw.ImageShape(center, pattern_surf)
-                    self.drawing_canva.add_shape(img_shape)
 
             if self._side_pannel_menu.get_abs_rect().collidepoint(pos) and self.drawing_mode:
                 self.drawing_mode = False
             elif (not self._side_pannel_menu.get_abs_rect().collidepoint(pos)) and not(self._shapes_button.is_enabled):
                 self.drawing_mode = True
+            elif self._side_pannel_menu.get_abs_rect().collidepoint(pos) and self.select_mode:
+                self.select_mode = False
+            elif (not self._side_pannel_menu.get_abs_rect().collidepoint(pos)) and not(self._select_button.is_enabled):
+                self.select_mode = True
 
             if self.drawing_mode:
                 if event.type == pygame.KEYDOWN:
@@ -337,21 +310,20 @@ class DrawAppState(State):
             # Select Mode events (drag to move shape)
             if self.select_mode:
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    self._selected_shape = None
-                    self._drag_offset = None
-                    for shape in self.drawing_canva._shapes:
+                    for num,shape in enumerate(self.drawing_canva._shapes) :
                         if shape.contains_point(pos):
+                            self._active_shape = num
                             self._selected_shape = shape
-                            self._drag_offset = (pos[0] - shape._center[0], pos[1] - shape._center[1])
                             break
+
+
                 elif event.type == pygame.MOUSEMOTION:
-                    if (self._selected_shape is not None and 
-                        self._drag_offset is not None and 
-                        pygame.mouse.get_pressed()[0]):
-                        new_center = (pos[0] - self._drag_offset[0], pos[1] - self._drag_offset[1])
-                        self._selected_shape.set_pos(new_center)
+                    if self._active_shape != None:
+                        self.drawing_canva._shapes[self._active_shape].move(event.rel)
+
                 elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                    self._drag_offset = None
+                    self._active_shape = None
+
             self._manager.process_events(event)
                 
 class DataAppState(State):
@@ -369,7 +341,7 @@ class StateManager():
             'home_page': HomePageState(screen, "./draw/themes/home_panel.json"),
             'draw_app': DrawAppState(screen, "./draw/themes/draw_app.json"),
         }
-        self._current_state = self._states['home_page']
+        self._current_state = self._states['draw_app']
 
     def change_screen(self, screen_name):
         self._current_state = self._states[screen_name]

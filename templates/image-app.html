@@ -49,11 +49,13 @@
 </div>
 <div class="container2">
     <div class="container">
-        <button class="util-button" title="Save File to Gallery" data-bs-toggle="tooltip" data-bs-placement="right" id="savebtn">
+        <button class="util-button" title="Save File to Gallery" data-bs-toggle="tooltip" data-bs-placement="right"
+            id="savebtn">
             <i class="fa-solid fa-floppy-disk"></i> </button>
     </div>
     <div class="container">
-        <button class="util-button" title="Export File" data-bs-toggle="tooltip" data-bs-placement="right" id="exportbtn">
+        <button class="util-button" title="Export File" data-bs-toggle="tooltip" data-bs-placement="right"
+            id="exportbtn">
             <i class="fa-solid fa-file-export"></i> </button>
     </div>
 </div>
@@ -68,6 +70,7 @@
 <div class="action-buttons">
     <input type="file" id="uploadInput" accept="image/png, image/jpeg" style="display: none;">
     <label for="uploadInput" class="action-button" id="uploadBtn">Upload Image</label>
+    <button class="action-button" id="revertChanges">Revert Changes</button>
 </div>
 <div id="snackbar"></div>
 <script>
@@ -165,6 +168,7 @@
         }).then(response => response.json())
             .then(data => {
                 if (data.image_url) {
+                    processed_image_url = data.image_url
                     imageContainer.innerHTML = '<img src="' + data.image_url + '?t=' + Date.now() + '" alt="Uploaded Image">';
                 };
             });
@@ -365,10 +369,15 @@
         slider.value = 0;
         brightnessValue.textContent = 0;
     })
+    document.querySelector("#revertChanges").addEventListener('click', function () {
+        imageContainer.innerHTML = '<img src="' + image_url_global + '?t=' + Date.now() + '" alt="Uploaded Image">';
+    }
+
+    );
     document.getElementById("savebtn").addEventListener("click", function () {
-        try{
+        try {
             uploaded_image = processed_image_url
-        }catch(error){
+        } catch (error) {
             uploaded_image = image_url_global
         }
         fetch("{{ url_for('upload_gallery') }}", {
@@ -387,18 +396,18 @@
                     let snackbar = document.getElementById("snackbar");
                     snackbar.innerHTML = data.message;
                     snackbar.classList.add("show");
-                 setTimeout(() => snackbar.classList.remove("show"), 1500);
+                    setTimeout(() => snackbar.classList.remove("show"), 1500);
                 }
 
             });
-});
-document.getElementById("exportbtn").addEventListener("click", function () {
-    const link = document.createElement("a"); 
-    extension = processed_image_url.split('.').pop()
-    link.href = processed_image_url;
-    link.download = `processed_image.${extension}`;
-    link.click();  // Trigger download
-});
+    });
+    document.getElementById("exportbtn").addEventListener("click", function () {
+        const link = document.createElement("a");
+        extension = processed_image_url.split('.').pop()
+        link.href = processed_image_url;
+        link.download = `processed_image.${extension}`;
+        link.click();  // Trigger download
+    });
 
 </script>
 

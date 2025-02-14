@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import pygame
+import pygame.gfxdraw
 import math
 import numpy as np
 import random
@@ -37,7 +38,6 @@ class Shape(ABC):
     def draw(self, screen):
         pass
 
-    @abstractmethod
     def resize(self, resize_factor):
         pass
 
@@ -114,7 +114,7 @@ class Circle(Shape):
     # Updated highlight method for circle:
     def highlight_shape(self, screen):
         # Draw a circle slightly larger than the original with a thick border
-        pygame.draw.circle(screen, (108, 180, 238), self._center, self._radius + 5, 7)
+        pygame.draw.circle(screen, (108, 180, 238), self._center, self._radius + 2, 7)
         # Draw small square handles at the cardinal points
         points = [
             (self._center[0] + self._radius, self._center[1]),
@@ -133,15 +133,16 @@ class ImageShape(Shape):
         self.rect = self.image.get_rect(center=center)
     def draw(self, screen):
         screen.blit(self.image, self.rect)
-    def resize(self, resize_factor):
-        pass  # Not implemented
     def contains_point(self, pos):
         return self.rect.collidepoint(pos)
     def set_pos(self, pos):
         self._center = pos
         self.rect.center = pos
     def highlight_shape(self, screen):
-        pygame.draw.rect(screen, (108, 180, 238), self.rect, 7)
+        pygame.draw.rect(screen, (108, 180, 238), self.rect, 4)
+    def move(self, distance):
+        self._center = (self._center[0] + distance[0], self._center[1] + distance[1])
+        self.rect.center = (self.rect.center[0] + distance[0], self.rect.center[1] + distance[1])
 
 class Canva:
     def __init__(self):
@@ -175,118 +176,62 @@ def change_color(list_colors, selected_shape):
         if color == selected_shape.get_color():
             selected_shape.set_color(list_colors[(i + 1) % len(list_colors)])
             return
-
-# --- New Pattern Generation Functions ---
-# Each function creates a 300x300 surface, draws the pattern once, and returns that surface.
-
+def random_color():
+    return (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 def generate_circular_pattern():
-    size = (300, 300)
+    size = (200, 200)
     surf = pygame.Surface(size, pygame.SRCALPHA)
     surf.fill((0, 0, 0, 0))
-    center = (size[0]//2, size[1]//2)
-    num_shapes = 5  # fixed number of shapes (e.g., 360/5 degrees apart)
-    outer_radius = random.randint(80, 140)
-    for i in range(num_shapes):
-        angle = 2 * math.pi * i / num_shapes
-        x = center[0] + int(outer_radius * math.cos(angle))
-        y = center[1] + int(outer_radius * math.sin(angle))
-        shape_type = random.choice(["circle", "rectangle"])
-        lw = random.randint(1, 4)
-        if shape_type == "circle":
-            shape_radius = random.randint(10, 30)
-            pygame.draw.circle(surf, (128, 0, 128), (x, y), shape_radius, lw)
-        else:
-            width = random.randint(20, 50)
-            height = random.randint(20, 50)
-            rect = pygame.Rect(0, 0, width, height)
-            rect.center = (x, y)
-            pygame.draw.rect(surf, (128, 0, 128), rect, lw)
+    center = (size[0] // 2, size[1] // 2)
+    num_circles = 8  # number of circles around the anchor
+    anchor_radius = random.randint(20,60)  # distance from the center for placing circles
+    
+    for i in range(num_circles):
+        angle = 2 * math.pi * i / num_circles
+        x = center[0] + int(anchor_radius * math.cos(angle))
+        y = center[1] + int(anchor_radius * math.sin(angle))
+        circle_radius = random.randint(20, 50)
+        color = random_color()
+        pygame.draw.circle(surf, color, (x, y), circle_radius,4)
+        
     return surf
 
 def generate_spirograph_pattern():
     size = (300, 300)
     surf = pygame.Surface(size, pygame.SRCALPHA)
     surf.fill((0, 0, 0, 0))
-    center = (size[0]//2, size[1]//2)
-    radius = random.randint(80, 140)
-    num_points = random.randint(800, 1200)
+    center = (size[0] // 2, size[1] // 2)
+    num_points = 500
+    radius = random.randint(50, 100)
+    freq = random.uniform(3, 5)
     points = []
-    freq = random.uniform(4, 6)
-    phase_multiplier = random.randint(5, 10)
-    line_width = random.randint(1, 4)
+    
     for i in range(num_points):
-        t = 2 * math.pi * i / num_points * freq
-        offset_x = random.randint(-5, 5)
-        offset_y = random.randint(-5, 5)
-        x = center[0] + int(radius * math.cos(t) + 50 * math.cos(phase_multiplier * t)) + offset_x
-        y = center[1] + int(radius * math.sin(t) + 50 * math.sin(phase_multiplier * t)) + offset_y
+        t = 2 * math.pi * i / num_points
+        x = center[0] + int(radius * math.cos(t) + radius/2 * math.cos(freq * t))
+        y = center[1] + int(radius * math.sin(t) + radius/2 * math.sin(freq * t))
         points.append((x, y))
-    pygame.draw.lines(surf, (0, 255, 0), False, points, line_width)
+        
+    # Draw a smooth connecting line
+    pygame.draw.lines(surf, random_color(), False, points, 2)
     return surf
 
 def generate_rosecurves_pattern():
     size = (300, 300)
     surf = pygame.Surface(size, pygame.SRCALPHA)
     surf.fill((0, 0, 0, 0))
-    center = (size[0]//2, size[1]//2)
+    center = (size[0] // 2, size[1] // 2)
+    num_points = 500
+    amplitude = random.randint(60, 100)
     k = random.randint(2, 5)
-    radius = random.randint(80, 140)
-    num_points = random.randint(800, 1200)
     points = []
+    
     for i in range(num_points):
         t = 2 * math.pi * i / num_points
-        r = radius * math.cos(k * t)
-        offset_x = random.randint(-5, 5)
-        offset_y = random.randint(-5, 5)
-        x = center[0] + int(r * math.cos(t)) + offset_x
-        y = center[1] + int(r * math.sin(t)) + offset_y
+        r = amplitude * math.cos(k * t)
+        x = center[0] + int(r * math.cos(t))
+        y = center[1] + int(r * math.sin(t))
         points.append((x, y))
-    lw = random.randint(1, 4)
-    pygame.draw.lines(surf, (0, 0, 255), False, points, lw)
-    return surf
-
-def generate_lissajous_pattern():
-    size = (300, 300)
-    surf = pygame.Surface(size, pygame.SRCALPHA)
-    surf.fill((0, 0, 0, 0))
-    center = (size[0]//2, size[1]//2)
-    a = random.randint(2, 5)
-    b = random.randint(2, 5)
-    delta = random.uniform(0, math.pi)
-    radius = random.randint(80, 140)
-    num_points = random.randint(800, 1200)
-    points = []
-    for i in range(num_points):
-        t = 2 * math.pi * i / num_points
-        offset_x = random.randint(-5, 5)
-        offset_y = random.randint(-5, 5)
-        x = center[0] + int(radius * math.sin(a * t + delta)) + offset_x
-        y = center[1] + int(radius * math.sin(b * t)) + offset_y
-        points.append((x, y))
-    lw = random.randint(1, 4)
-    pygame.draw.lines(surf, (255, 0, 255), False, points, lw)
-    return surf
-
-def generate_fourier_pattern():
-    size = (300, 300)
-    surf = pygame.Surface(size, pygame.SRCALPHA)
-    surf.fill((0, 0, 0, 0))
-    center = (size[0]//2, size[1]//2)
-    num_points = random.randint(800, 1200)
-    points = []
-    amp1 = random.randint(30, 70)
-    amp2 = random.randint(20, 50)
-    freq1 = random.randint(2, 5)
-    freq2 = random.randint(2, 5)
-    phase1 = random.uniform(0, 2*math.pi)
-    phase2 = random.uniform(0, 2*math.pi)
-    for i in range(num_points):
-        t = 2 * math.pi * i / num_points
-        offset_x = random.randint(-5, 5)
-        offset_y = random.randint(-5, 5)
-        x = center[0] + int(amp1 * math.sin(freq1 * t + phase1) + amp2 * math.sin(freq2 * t + phase2)) + offset_x
-        y = center[1] + int(amp1 * math.cos(freq1 * t + phase1) + amp2 * math.cos(freq2 * t + phase2)) + offset_y
-        points.append((x, y))
-    lw = random.randint(1, 4)
-    pygame.draw.lines(surf, (255, 165, 0), False, points, lw)
+        
+    pygame.draw.lines(surf, random_color(), False, points, 2)
     return surf

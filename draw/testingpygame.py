@@ -57,23 +57,6 @@ def main():
     # Quit Pygame
     pygame.quit()
     
-def draw_circular_shapes():
-    pass
-
-def draw_spirograph_patterns():
-    pass
-
-def draw_rosecurves_patterns():
-    pass
-
-def draw_lissajouscurves_patterns():
-    pass
-
-def draw_fourier_cycles():
-    pass
-
-def main_menu():
-    pass
 
 if __name__ == "__main__":
     main()
