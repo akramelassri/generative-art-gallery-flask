@@ -31,12 +31,12 @@ body {
 #snackbar {
     visibility: hidden;
     min-width: 250px;
-    background-color: #333;
+    background-color: #8CBF4C;
     color: #fff;
     text-align: center;
     padding: 12px;
     position: fixed;
-    bottom: 30px;
+    top: 30px;
     left: 50%;
     transform: translateX(-50%);
     border-radius: 5px;
@@ -47,7 +47,7 @@ body {
 #snackbar.show {
     visibility: visible;
     opacity: 1;
-    bottom: 50px;
+    top: 50px;
 }
 
 /********** SIDEBAR **********/

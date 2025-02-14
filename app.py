@@ -15,6 +15,7 @@ import seaborn as sns
 from wordcloud import WordCloud
 from werkzeug.utils import secure_filename
 from pydub import AudioSegment
+
 app = Flask(__name__)
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -30,7 +31,8 @@ def get_gallery_images():
 @app.route("/")
 @app.route("/home")
 def home_page():
-    return render_template("home.html")
+    images = get_gallery_images()
+    return render_template("home.html", images=images)
 
 @app.route("/gallery")
 def gallery_page():
@@ -50,7 +52,7 @@ def drawing_app():
 
     # Run the script using the same Python executable
     subprocess.Popen([venv_python, script_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    return jsonify({"message": "Script started successfully!"}), 200
+    return jsonify({"message": "App started successfully!"}), 200
 
 @app.route("/data-app")
 def data_app():

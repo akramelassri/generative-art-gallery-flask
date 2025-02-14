@@ -1,1 +1,84 @@
 {% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block maincontent %}
+<div class="content">
+    <h1 class="mb-4">Apps</h1>
+
+    <!-- Row of square icon buttons (unchanged) -->
+    <div class="d-flex flex-wrap gap-3 mb-5">
+        <a href="#" class="btn-square" type="button" title="Draw App" data-bs-toggle="tooltip" data-bs-placement="top" id="good">
+            <i class="fa-solid fa-shapes"></i>
+        </a>
+        <a href="{{ url_for('data_app') }}" class="btn-square" type="button" title="Data Visualization" data-bs-toggle="tooltip" data-bs-placement="top">
+            <i class="fas fa-chart-line"></i>
+        </a>
+        <a href="{{ url_for('image_app') }}" class="btn-square" type="button" title="Image App" data-bs-toggle="tooltip" data-bs-placement="top">
+            <i class="fas fa-image"></i>
+        </a>
+        <a href="{{ url_for('audio_app') }}" class="btn-square" type="button" title="Audio App" data-bs-toggle="tooltip" data-bs-placement="top">
+            <i class="fa-solid fa-file-audio"></i>
+        </a>
+        <button class="btn-square" type="button" title="Style Transfer" data-bs-toggle="tooltip" data-bs-placement="top">
+            <i class="fas fa-paint-brush"></i>
+        </button>
+    </div>
+
+    <!-- Recent Artworks Gallery (without description) -->
+    <h2>Recent Artworks</h2>
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for image in images %}
+        <div class="col">
+            <div class="card">
+                <img src="{{ url_for('static', filename='gallery/' ~ image) }}" 
+                     class="card-img-top" 
+                     alt="{{ image }}"
+                     data-bs-toggle="modal" 
+                     data-bs-target="#imageModal" 
+                     data-image="{{ url_for('static', filename='gallery/' ~ image) }}">
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal for Image Preview -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-body">
+        <img src="" id="modalImage" class="img-fluid" alt="Image Preview">
+      </div>
+    </div>
+  </div>
+</div>
+<div id="snackbar"></div>
+
+<script>
+  // Update modal image source when an artwork is clicked
+  var imageModal = document.getElementById('imageModal');
+  imageModal.addEventListener('show.bs.modal', function (event) {
+    var triggerImage = event.relatedTarget;
+    var imageSrc = triggerImage.getAttribute('data-image');
+    document.getElementById('modalImage').src = imageSrc;
+  });
+  document.getElementById("good").addEventListener('click', function () {
+            fetch ("{{ url_for('drawing_app') }}", {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+        }).then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    let snackbar = document.getElementById("snackbar");
+                    snackbar.innerHTML = data.message;
+                    snackbar.classList.add("show");
+                 setTimeout(() => snackbar.classList.remove("show"), 1500);
+                }
+
+            })});
+</script>
+{% endblock %}
