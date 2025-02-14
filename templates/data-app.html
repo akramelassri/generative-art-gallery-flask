@@ -28,10 +28,11 @@
     <section id="upload-data" class="mb-5">
         <h2>Upload Your Data</h2>
         <form id="upload-form" method="POST" action="{{ url_for('handle_file_upload') }}" enctype="multipart/form-data">
-            <div class="input-group mb-3">
+            <div class="mb-3">
+                <label for="data-file" class="form-label">Choose a data file:</label>
                 <input type="file" id="data-file" name="data-file" accept=".csv,.xls,.xlsx" required class="form-control" />
-                <button type="submit" class="btn btn-primary">Upload</button>
             </div>
+            <button type="submit" class="btn btn-primary">Upload</button>
         </form>
     </section>
     
@@ -101,164 +102,163 @@
         <div id="plot-container" class="mt-4"></div>
     </section>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        
+        let storedFileId = '';
+        let storedOriginalFilename = '';
+    
+        // Attach event listener to the upload form
+        const form = document.getElementById('upload-form');
+        if (!form) {
+          console.error("Upload form not found!");
+          return;
+        }
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            console.log("Upload form submitted.");
+            const formData = new FormData(form);
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                console.log("Server response:", result);
+                
+                if (response.ok) {
+                    // Show cleaning section and populate columns
+                    document.getElementById('clean-data').style.display = 'block';
+                    populateColumns(result.columns);
+                    
+                    // Store file details for further processing
+                    storedFileId = result.file_id;
+                    storedOriginalFilename = result.original_filename;
+                } else {
+                    throw new Error(result.error || 'Upload failed');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert(error.message);
+            }
+        });
+    
+        // Handle data cleaning
+        document.getElementById('start-cleaning').addEventListener('click', async () => {
+            const cleaningOptions = {
+              handleMissing: document.getElementById('handle-missing').checked,
+              removeDuplicates: document.getElementById('remove-duplicates').checked,
+              convertTypes: document.getElementById('convert-types').checked,
+              renameColumns: document.getElementById('rename-columns').checked,
+              handleOutliers: document.getElementById('handle-outliers').checked,
+              cleanText: document.getElementById('clean-text').checked
+            };
+    
+            const payload = {
+                file_id: storedFileId,
+                original_filename: storedOriginalFilename,
+                cleaning_options: cleaningOptions
+            };
+            console.log("Starting cleaning with payload:", payload);
+            try {
+                const response = await fetch('/clean-data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                console.log("Cleaning response:", result);
+                
+                if (!response.ok || result.error) {
+                    throw new Error(result.error || 'Data cleaning failed.');
+                }
+                
+                // Transition to visualization section
+                document.getElementById('clean-data').style.display = 'none';
+                document.getElementById('visualize-data').style.display = 'block';
+                
+                // Update columns if available
+                populateColumns(result.columns || []);
+                alert('Data cleaning completed successfully!');
+            } catch (error) {
+                console.error('Cleaning error:', error);
+                alert('Cleaning failed: ' + error.message);
+            }
+        });
+    
+        // Function to populate the dropdown with column names
+        function populateColumns(columns) {
+            const select = document.getElementById('select-columns');
+            select.innerHTML = '';
+            if (columns && columns.length > 0) {
+                columns.forEach(col => {
+                    const option = document.createElement('option');
+                    option.value = col;
+                    option.textContent = col;
+                    select.appendChild(option);
+                });
+            }
+        }
+    
+        // Update available plot options based on selected columns
+        document.getElementById('select-columns').addEventListener('change', () => {
+            const selectedColumns = Array.from(document.getElementById('select-columns').selectedOptions)
+                                         .map(opt => opt.value);
+            updatePlotOptions(selectedColumns);
+        });
+    
+        function updatePlotOptions(columns) {
+            const selectPlot = document.getElementById('select-plot');
+            selectPlot.innerHTML = '';
+            fetch('/get_plots', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ columns: columns })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Available plots:", data.plots);
+                data.plots.forEach(plot => {
+                    const option = document.createElement('option');
+                    option.value = plot;
+                    option.textContent = plot;
+                    selectPlot.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error fetching plots:', error));
+        }
+    
+        // Generate visualization based on user selections
+        document.getElementById('generate-visualization').addEventListener('click', async () => {
+            const selectedColumns = Array.from(document.getElementById('select-columns').selectedOptions)
+                                         .map(opt => opt.value);
+            const plotType = document.getElementById('select-plot').value;
+            console.log("Generating plot for columns:", selectedColumns, "with plot type:", plotType);
+            try {
+                const response = await fetch('/generate-plot', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        columns: selectedColumns,
+                        plot_type: plotType
+                    })
+                });
+                const data = await response.json();
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                // Display the generated plot
+                document.getElementById('plot-container').innerHTML = `<img src="${data.plot_url}" alt="Generated Plot">`;
+            } catch (error) {
+                console.error('Error generating plot:', error);
+            }
+        });
+    });
+    </script>
 {% endblock %}
 
 {% block scripts %}
-<script>
-    console.log("javascript is good")
-document.addEventListener('DOMContentLoaded', () => {
-    console.log("DOM fully loaded and parsed.");
-    
-    let storedFileId = '';
-    let storedOriginalFilename = '';
 
-    // Attach event listener to the upload form
-    const form = document.getElementById('upload-form');
-    if (!form) {
-      console.error("Upload form not found!");
-      return;
-    }
-    
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        console.log("Upload form submitted.");
-        const formData = new FormData(form);
-        try {
-            const response = await fetch(form.action, {
-                method: 'POST',
-                body: formData
-            });
-            const result = await response.json();
-            console.log("Server response:", result);
-            
-            if (response.ok) {
-                // Show cleaning section and populate columns
-                document.getElementById('clean-data').style.display = 'block';
-                populateColumns(result.columns);
-                
-                // Store file details for further processing
-                storedFileId = result.file_id;
-                storedOriginalFilename = result.original_filename;
-            } else {
-                throw new Error(result.error || 'Upload failed');
-            }
-        } catch (error) {
-            console.error('Upload error:', error);
-            alert(error.message);
-        }
-    });
-
-    // Handle data cleaning
-    document.getElementById('start-cleaning').addEventListener('click', async () => {
-        const cleaningOptions = {
-          handleMissing: document.getElementById('handle-missing').checked,
-          removeDuplicates: document.getElementById('remove-duplicates').checked,
-          convertTypes: document.getElementById('convert-types').checked,
-          renameColumns: document.getElementById('rename-columns').checked,
-          handleOutliers: document.getElementById('handle-outliers').checked,
-          cleanText: document.getElementById('clean-text').checked
-        };
-
-        const payload = {
-            file_id: storedFileId,
-            original_filename: storedOriginalFilename,
-            cleaning_options: cleaningOptions
-        };
-        console.log("Starting cleaning with payload:", payload);
-        try {
-            const response = await fetch('/clean-data', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const result = await response.json();
-            console.log("Cleaning response:", result);
-            
-            if (!response.ok || result.error) {
-                throw new Error(result.error || 'Data cleaning failed.');
-            }
-            
-            // Transition to visualization section
-            document.getElementById('clean-data').style.display = 'none';
-            document.getElementById('visualize-data').style.display = 'block';
-            
-            // Update columns if available
-            populateColumns(result.columns || []);
-            alert('Data cleaning completed successfully!');
-        } catch (error) {
-            console.error('Cleaning error:', error);
-            alert('Cleaning failed: ' + error.message);
-        }
-    });
-
-    // Function to populate the dropdown with column names
-    function populateColumns(columns) {
-        const select = document.getElementById('select-columns');
-        select.innerHTML = '';
-        if (columns && columns.length > 0) {
-            columns.forEach(col => {
-                const option = document.createElement('option');
-                option.value = col;
-                option.textContent = col;
-                select.appendChild(option);
-            });
-        }
-    }
-
-    // Update available plot options based on selected columns
-    document.getElementById('select-columns').addEventListener('change', () => {
-        const selectedColumns = Array.from(document.getElementById('select-columns').selectedOptions)
-                                     .map(opt => opt.value);
-        updatePlotOptions(selectedColumns);
-    });
-
-    function updatePlotOptions(columns) {
-        const selectPlot = document.getElementById('select-plot');
-        selectPlot.innerHTML = '';
-        fetch('/get_plots', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ columns: columns })
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log("Available plots:", data.plots);
-            data.plots.forEach(plot => {
-                const option = document.createElement('option');
-                option.value = plot;
-                option.textContent = plot;
-                selectPlot.appendChild(option);
-            });
-        })
-        .catch(error => console.error('Error fetching plots:', error));
-    }
-
-    // Generate visualization based on user selections
-    document.getElementById('generate-visualization').addEventListener('click', async () => {
-        const selectedColumns = Array.from(document.getElementById('select-columns').selectedOptions)
-                                     .map(opt => opt.value);
-        const plotType = document.getElementById('select-plot').value;
-        console.log("Generating plot for columns:", selectedColumns, "with plot type:", plotType);
-        try {
-            const response = await fetch('/generate-plot', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    columns: selectedColumns,
-                    plot_type: plotType
-                })
-            });
-            const data = await response.json();
-            if (data.error) {
-                alert(data.error);
-                return;
-            }
-            // Display the generated plot
-            document.getElementById('plot-container').innerHTML = `<img src="${data.plot_url}" alt="Generated Plot">`;
-        } catch (error) {
-            console.error('Error generating plot:', error);
-        }
-    });
-});
-</script>
 {% endblock %}
