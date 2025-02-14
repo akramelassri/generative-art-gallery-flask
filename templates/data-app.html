@@ -70,34 +70,34 @@
             </div>
         </div>
     </section>
-    
-    <!-- Data Visualization Section (Hidden initially) -->
+   
     <!-- Data Visualization Section -->
-<section id="visualize-data" class="mb-5" style="display:none;">
-    <h2>Visualize Your Data</h2>
-    <p>Select columns and generate visualizations:</p>
-    <div class="card">
-        <div class="card-body">  
-            <div class="mb-3">
-                <label for="select-columns" class="form-label">Select Columns:</label>
-                <select id="select-columns" name="select-columns" class="form-select" multiple>
-                    <!-- Columns will be dynamically populated here -->
-                </select>
-            </div>
-            <button type="button" class="btn btn-success" id="get-plot-types">Get Plot Types</button>
-            
-            <div class="mb-3" id="select-plot_show" style="display: none;">
+    <section id="visualize-data" class="mb-5" style="display:none;">
+        <h2>Visualize Your Data</h2>
+        <p>Select columns and generate visualizations:</p>
+        <div class="card">
+            <div class="card-body">  
+                <div class="mb-3">
+                    <label  class="form-label">Select Columns:</label>
+                    <div id="column-checkboxes">
+                        <!-- Checkboxes will be dynamically populated here -->
+                    </div>
+                </div>
+                <button type="button" class="btn btn-success" id="get-plot-types">Get Plot Types</button>
+                
+                <div class="mb-3" id="select-plot_show" style="display: none;">
                     <label for="select-plot" class="form-label">Select Visualization Type:</label>
                     <select id="select-plot" name="select-plot" class="form-select">
                         <!-- Add options here -->
                     </select>
                 </div>
-             <button type="button" class="btn btn-success" id="generate-visualization" style="display: none;">Generate Visualization</button>
+                <button type="button" class="btn btn-success" id="generate-visualization" style="display: none;">Generate Visualization</button>
+            </div>
         </div>
-    </div>
-    <!-- Container to display the generated plot -->
-    <div id="plot-container" class="mt-4"></div>
-</section>
+        <!-- Container to display the generated plot -->
+        <div id="plot-container" class="mt-4"></div>
+    </section>
+</div>
 </div>
 <script>
     function init() {
@@ -189,24 +189,34 @@
 
         // Function to populate the dropdown with column names
         function populateColumns(columns) {
-            const select = document.getElementById('select-columns');
-            select.innerHTML = '';
-            if (columns && columns.length > 0) {
-                columns.forEach(col => {
-                    const option = document.createElement('option');
-                    option.value = col;
-                    option.textContent = col;
-                    select.appendChild(option);
-                });
-            }
+            const columnCheckboxes = document.getElementById('column-checkboxes');
+            columnCheckboxes.innerHTML = ''; // Clear any existing checkboxes
+
+            columns.forEach(col => {
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = col; // Use column name as ID
+                checkbox.value = col; // Store the column name as value
+
+                const label = document.createElement('label');
+                label.htmlFor = col; // Associate label with checkbox
+                label.textContent = col;
+
+                const div = document.createElement('div');
+                div.classList.add('form-check'); // Bootstrap styling
+                div.appendChild(checkbox);
+                div.appendChild(label);
+                columnCheckboxes.appendChild(div);
+            });
         }
+       
 
         // Generate visualization based on user selections
-                // Generate visualization based on user selections
-                document.getElementById('get-plot-types').addEventListener('click', async () => {
-            const selectedColumns = Array.from(document.getElementById('select-columns').selectedOptions)
-                                         .map(opt => opt.value);
-            console.log("get Available plots");
+        document.getElementById('get-plot-types').addEventListener('click', async () => {
+            // Get selected columns
+            const selectedColumns = Array.from(document.querySelectorAll('#column-checkboxes input[type="checkbox"]:checked'))
+                                         .map(checkbox => checkbox.value);
+            console.log("get Available plots",selectedColumns);
             try {
                 const response = await fetch('/get_plots', {
                     method: 'POST',
@@ -229,8 +239,8 @@
             }
         });
          document.getElementById('generate-visualization').addEventListener('click', async () => {
-            const selectedColumns = Array.from(document.getElementById('select-columns').selectedOptions)
-                                         .map(opt => opt.value);
+            const selectedColumns = Array.from(document.querySelectorAll('#column-checkboxes input[type="checkbox"]:checked'))
+                                         .map(checkbox => checkbox.value);;
             const plotType =  document.getElementById('select-plot').value;
             console.log("Generating plot for columns:", selectedColumns, "with plot type:", plotType);
             try {
@@ -266,7 +276,6 @@
                 document.getElementById('generate-visualization').style.display = 'block';
             }
         }
-        
     }
 </script>
 <script>
