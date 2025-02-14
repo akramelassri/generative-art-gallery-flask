@@ -1,3 +1,4 @@
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from werkzeug.utils import secure_filename
 import numpy as np
 import cv2
@@ -5,7 +6,6 @@ from image.process_image import process_image_test
 import os 
 import subprocess
 import sys
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import uuid
 import pandas as pd
 import matplotlib
@@ -15,9 +15,16 @@ import seaborn as sns
 from wordcloud import WordCloud
 from werkzeug.utils import secure_filename
 from pydub import AudioSegment
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
 app = Flask(__name__)
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['ALLOWED_EXTENSIONS'] = {'csv', 'xls', 'xlsx'}
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB limit
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
@@ -45,9 +52,180 @@ def drawing_app():
     subprocess.Popen([venv_python, script_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return jsonify({"message": "Script started successfully!"}), 200
 
-@app.route("/data-app")
+# Helper functions
+
+
+def get_file_extension(filename):
+    return filename.rsplit('.', 1)[1].lower()
+
+def read_data_file(filepath, extension):
+    if extension == 'csv':
+        return pd.read_csv(filepath)
+    elif extension in {'xls', 'xlsx'}:
+        return pd.read_excel(filepath)
+    return None
+@app.route('/data-app')
 def data_app():
-    return render_template("data-app.html")
+    return render_template('data-app.html')
+# Endpoint 1: File Upload
+def allowed_file_data(filename):
+    if '.' in filename:
+        ext = filename.rsplit('.', 1)[1].lower()
+    else:
+        ext = ''
+        print("No extension fouZnd in filename")
+    is_allowed = ext in app.config['ALLOWED_EXTENSIONS']
+    return is_allowed
+
+@app.route('/data-app/upload', methods=['POST'])
+def handle_file_upload():
+    if 'data-file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+    
+    file = request.files['data-file']
+    
+    if file.filename == '' or not allowed_file_data(file.filename):
+        return jsonify({'error': 'Invalid file'}), 400
+
+    try:
+        # Save uploaded file
+        filename = secure_filename(file.filename)
+        unique_id = str(uuid.uuid4())
+        save_filename = f"{unique_id}_{filename}"
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], save_filename)
+        file.save(filepath)
+
+        # Read file and get columns
+        extension = get_file_extension(filename)
+        df = read_data_file(filepath, extension)
+        columns = df.columns.tolist()
+
+        return jsonify({
+            'message': 'File uploaded successfully',
+            'columns': columns,
+            'file_id': unique_id,
+            'original_filename': filename
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+# Endpoint 2: Data Cleaning
+@app.route('/clean-data', methods=['POST'])
+def clean_data():
+    data = request.json
+    file_id = data.get('file_id')
+    cleaning_options = data.get('cleaning_options', {})
+
+    try:
+        # Find original file
+        original_file = next(f for f in os.listdir(app.config['UPLOAD_FOLDER']) if f.startswith(file_id))
+        original_path = os.path.join(app.config['UPLOAD_FOLDER'], original_file)
+        
+        # Read and process data
+        df = read_data_file(original_path, get_file_extension(original_file))
+        
+        # Apply cleaning operations
+        if cleaning_options.get('handle_missing'):
+            df = df.dropna()
+        if cleaning_options.get('remove_duplicates'):
+            df = df.drop_duplicates()
+        if cleaning_options.get('convert_types'):
+            df = df.convert_dtypes()
+        if cleaning_options.get('rename_columns'):
+            df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
+        if cleaning_options.get('handle_outliers'):
+            numeric_cols = df.select_dtypes(include='number').columns
+            df[numeric_cols] = df[numeric_cols].apply(lambda x: x.clip(*x.quantile([0.05, 0.95])))
+        if cleaning_options.get('clean_text'):
+            text_cols = df.select_dtypes(include='object').columns
+            df[text_cols] = df[text_cols].apply(lambda x: x.str.strip().str.lower())
+
+        # Overwrite original file with cleaned data
+        cleaned_filename = f"cleaned_{file_id}_{data.get('original_filename')}"
+        cleaned_path = os.path.join(app.config['UPLOAD_FOLDER'], cleaned_filename)
+        df.to_csv(cleaned_path, index=False)
+
+        return jsonify({
+            'message': 'Data cleaned successfully',
+            'columns': df.columns.tolist(),
+            'cleaned_file': cleaned_filename
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Endpoint 3: Get Available Plots
+@app.route('/get_plots', methods=['POST'])
+def get_available_plots():
+    data = request.json
+    columns = data.get('columns', [])
+    file_id = data.get('file_id')
+
+    try:
+        # Find cleaned file
+        cleaned_file = next(f for f in os.listdir(app.config['UPLOAD_FOLDER']) if f.startswith(f"cleaned_{file_id}"))
+        df = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], cleaned_file))
+
+        # Determine available plot types
+        plot_types = []
+        numeric_cols = df[columns].select_dtypes(include='number').columns
+        text_cols = df[columns].select_dtypes(include='object').columns
+
+        if len(numeric_cols) >= 1:
+            plot_types.extend(['Histogram', 'Box Plot'])
+        if len(numeric_cols) >= 2:
+            plot_types.extend(['Scatter Plot', 'Line Plot'])
+        if len(text_cols) >= 1:
+            plot_types.append('Word Cloud')
+        if len(numeric_cols) >= 2 and len(text_cols) >= 1:
+            plot_types.append('Heatmap')
+
+        return jsonify({'plots': list(set(plot_types))})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Endpoint 4: Generate Visualization
+@app.route('/generate-plot', methods=['POST'])
+def generate_visualization():
+    data = request.json
+    file_id = data.get('file_id')
+    columns = data.get('columns', [])
+    plot_type = data.get('plot_type')
+
+    try:
+        # Find cleaned file
+        cleaned_file = next(f for f in os.listdir(app.config['UPLOAD_FOLDER']) if f.startswith(f"cleaned_{file_id}"))
+        df = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], cleaned_file))
+
+        # Generate plot
+        plot_filename = f"plot_{uuid.uuid4()}.png"
+        plot_path = os.path.join('static/plots', plot_filename)
+        
+        plt.figure(figsize=(10, 6))
+        
+        if plot_type == 'Histogram':
+            sns.histplot(df[columns[0]])
+        elif plot_type == 'Scatter Plot':
+            sns.scatterplot(x=columns[0], y=columns[1], data=df)
+        elif plot_type == 'Line Plot':
+            sns.lineplot(x=columns[0], y=columns[1], data=df)
+        elif plot_type == 'Box Plot':
+            sns.boxplot(x=df[columns[0]])
+        elif plot_type == 'Heatmap':
+            sns.heatmap(df[columns].corr(), annot=True)
+        
+        plt.title(f"{plot_type} of {', '.join(columns)}")
+        plt.savefig(plot_path)
+        plt.close()
+
+        return jsonify({
+            'plot_url': f'/static/plots/{plot_filename}',
+            'message': 'Plot generated successfully'
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route("/image-app")
