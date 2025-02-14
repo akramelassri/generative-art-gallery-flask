@@ -76,6 +76,8 @@ enables ease of use and subsenquently ease of mind while using the app
 
 example of the home page:
 
+![Home Page](image/screenshot_2025.png)
+
 ---
 
 ## Techniques and tools used:
@@ -163,7 +165,3 @@ valuable experience.
 
 ---
 
-	Concepts and Design of the gallery  
-	Techniques and tools used:  
-	Challenges:  
-	Conclusion
