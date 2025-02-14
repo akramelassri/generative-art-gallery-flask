@@ -315,7 +315,9 @@ class DrawAppState(State):
                             self._active_shape = num
                             self._selected_shape = shape
                             break
-
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_DELETE:
+                    if self._selected_shape != None:
+                        self.drawing_canva._shapes.remove(self._selected_shape)
 
                 elif event.type == pygame.MOUSEMOTION:
                     if self._active_shape != None:
